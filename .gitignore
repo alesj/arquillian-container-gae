@@ -1,0 +1,6 @@
+.idea/
+*.ipr
+*.iws
+*.iml
+target/
+gae-embedded-1.4/target
