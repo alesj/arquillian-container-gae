@@ -41,6 +41,7 @@ import org.jboss.arquillian.spi.client.container.LifecycleException;
 import org.jboss.arquillian.spi.client.protocol.ProtocolDescription;
 import org.jboss.arquillian.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.spi.client.protocol.metadata.ProtocolMetaData;
+import org.jboss.arquillian.spi.client.protocol.metadata.Servlet;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 
@@ -139,13 +140,12 @@ public class AppEngineEmbeddedContainer implements DeployableContainer<AppEngine
       try
       {
          HTTPContext httpContext = new HTTPContext(containerConfig.getBindAddress(), containerConfig.getBindHttpPort());
-/*
-         for (ServletHolder servlet : wctx.getServletHandler().getServlets())
+         AppContext context = server.getAppContext();
+         WebAppContextUtil wctx = new WebAppContextUtil(context.getContainerContext());
+         for (WebAppContextUtil.ServletHolder servlet : wctx.getServlets())
          {
             httpContext.add(new Servlet(servlet.getName(), wctx.getContextPath()));
          }
-*/
-
          return new ProtocolMetaData().addContext(httpContext);
       }
       catch (Exception e)
