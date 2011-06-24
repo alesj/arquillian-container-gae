@@ -17,111 +17,57 @@
     <name>Arquillian Container GAE Embedded 1.4.x</name>
     <description>GAE Embedded 1.4.x Container integration for the Arquillian project</description>
 
-    <properties>
-        <!-- minimum version known to work with tests (minimum recommended version) -->
-        <version.appengine>1.4.3</version.appengine>
-        <version.cdi-api>1.0</version.cdi-api>
-        <version.meta-inf>1.1</version.meta-inf>
-        <version.glassfish.el>2.2</version.glassfish.el>
-        <version.servlet-api>2.5</version.servlet-api>
-        <version.jsp-api>2.2</version.jsp-api>
-        <version.h2>1.2.138</version.h2>
-    </properties>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${version.surefire.plugin}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-
-            <!-- Surefire -->
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>
-                        -javaagent:${appengine.home}/lib/agent/appengine-agent.jar
-                    </argLine>
-                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                    <trimStackTrace>false</trimStackTrace>
-                    <printSummary>true</printSummary>
-                    <includes>
-                        <include>**/*TestCase.java</include>
-                        <include>**/*TestSuite.java</include>
-                    </includes>
-                    <useFile>true</useFile>
-                    <systemProperties>
-                        <property>
-                            <name>appengine.sdk.root</name>
-                            <value>${appengine.home}</value>
-                        </property>
-                    </systemProperties>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
-
     <dependencies>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-gae-common</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.google.appengine</groupId>
             <artifactId>appengine-tools-sdk</artifactId>
-            <version>${version.appengine}</version>
         </dependency>
         <dependency>
             <groupId>com.google.appengine</groupId>
             <artifactId>appengine-api-1.0-sdk</artifactId>
-            <version>${version.appengine}</version>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-spi</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- TODO We likely need a servlet packager to restrict use of EAR -->
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-cdi</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-resource</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
-            <version>${version.cdi-api}</version>
         </dependency>
 
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
-            <version>${version.meta-inf}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-junit</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -134,28 +80,24 @@
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>el-impl</artifactId>
-            <version>${version.glassfish.el}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
-            <version>${version.jsp-api}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
-            <version>${version.servlet-api}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>${version.h2}</version>
             <scope>test</scope>
         </dependency>
 
