@@ -22,11 +22,13 @@
 
 package org.jboss.arquillian.container.appengine.local_1_5;
 
+import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.appengine.tools.KickStart;
 import org.jboss.arquillian.container.appengine.cli.AppEngineCLIContainer;
+import org.jboss.arquillian.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.spi.client.container.DeploymentException;
 import org.jboss.arquillian.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
@@ -37,7 +39,7 @@ import org.kohsuke.MetaInfServices;
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-@MetaInfServices
+@MetaInfServices(DeployableContainer.class)
 public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLocalConfiguration>
 {
    private AppEngineLocalConfiguration configuration;
@@ -59,7 +61,15 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
          List<String> args = new ArrayList<String>();
          args.add("com.google.appengine.tools.development.DevAppServerMain"); // dev app server
 
-         addArg(args, "sdk_root", configuration.getSdkDir(), "appengine.sdk.root");
+         String sdkDir = (String) addArg(args, "sdk_root", configuration.getSdkDir(), "appengine.sdk.root");
+         if (new File(sdkDir).isDirectory() == false)
+            throw new DeploymentException("SDK root is not a directory: " + sdkDir);
+
+         String classpath = System.getProperty("java.class.path");
+         String toolsJar = sdkDir + "/lib/appengine-tools-api.jar";
+         if (classpath.contains(toolsJar) == false)
+            System.setProperty("java.class.path", classpath + File.pathSeparator + toolsJar);
+
          addArg(args, "server", configuration.getServer(), true);
 
          addArg(args, "address", configuration.getAddress(), false);
@@ -74,7 +84,7 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
          // TODO -- JVM FLAGS
          args.add(getAppLocation().getCanonicalPath());
 
-         KickStart.main(args.toArray(new String[args.size()]));
+         invokeKickStart(args.toArray(new String[args.size()]));
 
          return getProtocolMetaData(configuration.getAddress(), configuration.getPort(), archive);
       }
@@ -82,5 +92,12 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
       {
          throw new DeploymentException("Cannot deploy to local GAE.", e);
       }
+   }
+
+   protected void invokeKickStart(Object args) throws Exception
+   {
+      Class<?> kickStartClass = getClass().getClassLoader().loadClass("com.google.appengine.tools.KickStart");
+      Method main = kickStartClass.getMethod("main", String[].class);
+      main.invoke(null, args);
    }
 }

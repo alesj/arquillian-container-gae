@@ -23,7 +23,9 @@
 
 package org.jboss.arquillian.container.appengine.cli;
 
-import java.util.Collections;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,10 @@ import org.jboss.arquillian.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.spi.client.protocol.metadata.Servlet;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.Node;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.ServletMappingDef;
+import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
 
 /**
  * AppEngine CLI container.
@@ -56,7 +62,29 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
 
    protected static Map<String, String> extractServlets(Archive<?> archive)
    {
-      return Collections.emptyMap(); // TODO
+      Node webXml = archive.get("WEB-INF/web.xml");
+      InputStream stream = webXml.getAsset().openStream();
+      try
+      {
+         WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).from(stream);
+         List<ServletMappingDef> mappings = wad.getServletMappings();
+         Map<String, String> map = new HashMap<String, String>();
+         for (ServletMappingDef smd : mappings)
+         {
+            map.put(smd.getServletName(), smd.getUrlPatterns().get(0));
+         }
+         return map;
+      }
+      finally
+      {
+         try
+         {
+            stream.close();
+         }
+         catch (IOException ignored)
+         {
+         }
+      }
    }
 
    protected static void addArg(List<String> args, String key, boolean condition)
@@ -65,15 +93,18 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
          args.add("--" + key);
    }
 
-   protected static void addArg(List<String> args, String key, Object value, boolean optional)
+   protected static Object addArg(List<String> args, String key, Object value, boolean optional)
    {
       if (value == null && optional == false)
          throw new IllegalArgumentException("Missing argument value: " + key);
 
-      args.add("--" + key + "=" + value);
+      if (value != null)
+         args.add("--" + key + "=" + value);
+
+      return value;
    }
 
-   protected static void addArg(List<String> args, String key, Object value, String sysKey)
+   protected static Object addArg(List<String> args, String key, Object value, String sysKey)
    {
       if (sysKey != null)
          value = System.getProperty(sysKey, String.valueOf(value));
@@ -85,5 +116,7 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
          System.setProperty(sysKey, String.valueOf(value));
 
       args.add("--" + key + "=" + value);
+
+      return value;
    }
 }

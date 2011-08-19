@@ -33,6 +33,7 @@ import com.google.appengine.tools.development.DevAppServer;
 import org.jboss.arquillian.container.appengine.embedded_1_4.hack.AppEngineHack;
 import org.jboss.arquillian.container.appengine.embedded_1_4.hack.DevAppServerFactoryHack;
 import org.jboss.arquillian.container.common.AppEngineCommonContainer;
+import org.jboss.arquillian.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.spi.client.container.DeploymentException;
 import org.jboss.arquillian.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.spi.client.protocol.metadata.ProtocolMetaData;
@@ -45,7 +46,7 @@ import org.kohsuke.MetaInfServices;
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-@MetaInfServices
+@MetaInfServices(DeployableContainer.class)
 public class AppEngineEmbeddedContainer extends AppEngineCommonContainer<AppEngineEmbeddedConfiguration>
 {
    private AppEngineEmbeddedConfiguration containerConfig;
