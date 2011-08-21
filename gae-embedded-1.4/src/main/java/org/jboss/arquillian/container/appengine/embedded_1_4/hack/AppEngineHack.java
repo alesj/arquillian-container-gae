@@ -100,6 +100,8 @@ public class AppEngineHack
                return address;
             else if ("waitForServerToStart".equals(name))
                return null;
+            else if ("enforceApiDeadlines".equals(name))
+               return false;
             else
                throw new IllegalArgumentException("No such method supported: " + name);
          }

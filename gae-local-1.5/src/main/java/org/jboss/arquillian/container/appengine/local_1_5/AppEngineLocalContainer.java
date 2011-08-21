@@ -28,18 +28,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.arquillian.container.appengine.cli.AppEngineCLIContainer;
-import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
-import org.kohsuke.MetaInfServices;
 
 /**
  * Local / development AppEngine container.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-@MetaInfServices(DeployableContainer.class)
 public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLocalConfiguration>
 {
    private AppEngineLocalConfiguration configuration;
