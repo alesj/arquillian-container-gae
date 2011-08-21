@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.jboss.arquillian.container</groupId>
         <artifactId>arquillian-parent-gae</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0.Final-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -19,8 +19,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.arquillian</groupId>
-            <artifactId>arquillian-spi</artifactId>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-spi</artifactId>
         </dependency>
 
         <!-- TODO We likely need a servlet packager to restrict use of EAR -->

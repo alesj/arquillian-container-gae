@@ -22,8 +22,8 @@
 
 package org.jboss.arquillian.container.appengine.local_1_5;
 
-import org.jboss.arquillian.api.Deployment;
-import org.jboss.arquillian.api.RunAsClient;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;

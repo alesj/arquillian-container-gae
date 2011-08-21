@@ -26,8 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 
-import org.jboss.arquillian.api.Deployment;
-import org.jboss.arquillian.api.RunAsClient;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.OperateOnDeployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -48,7 +49,7 @@ public class AppEngineEmbeddedClientTestCase
     *
     * @return web archive
     */
-   @Deployment
+   @Deployment(name = "default")
    public static WebArchive getTestArchive()
    {
       return ShrinkWrap.create(WebArchive.class, "simple.war")
@@ -59,6 +60,7 @@ public class AppEngineEmbeddedClientTestCase
    }
 
    @Test
+   @OperateOnDeployment("default")
    public void shouldBeAbleToInvokeServletInDeployedWebApp() throws Exception
    {
       String body = readAllAndClose(new URL("http://localhost:8080/test").openStream());
