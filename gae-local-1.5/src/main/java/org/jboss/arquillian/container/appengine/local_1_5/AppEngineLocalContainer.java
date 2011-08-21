@@ -24,6 +24,8 @@ package org.jboss.arquillian.container.appengine.local_1_5;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +101,15 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
 
    protected void invokeKickStart(Object args) throws Exception
    {
-      Class<?> kickStartClass = getClass().getClassLoader().loadClass("com.google.appengine.tools.KickStart");
+      File lib = new File(configuration.getSdkDir(), "lib");
+      File tools = new File(lib, "appengine-tools-api.jar");
+      if (tools.exists() == false)
+         throw new IllegalArgumentException("No AppEngine tools jar: " + tools);
+
+      URL url = tools.toURI().toURL();
+      URL[] urls = new URL[]{url};
+      ClassLoader cl = new URLClassLoader(urls);
+      Class<?> kickStartClass = cl.loadClass("com.google.appengine.tools.KickStart");
       Method main = kickStartClass.getMethod("main", String[].class);
       main.invoke(null, args);
    }
