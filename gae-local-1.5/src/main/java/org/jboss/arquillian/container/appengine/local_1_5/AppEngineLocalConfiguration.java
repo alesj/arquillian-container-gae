@@ -34,7 +34,9 @@ import org.jboss.arquillian.container.spi.client.container.ContainerConfiguratio
  */
 public class AppEngineLocalConfiguration implements ContainerConfiguration
 {
-   private String sdkDir;
+   public static final String SDK_ROOT = "appengine.sdk.root";
+
+   private String sdkDir = System.getProperty(SDK_ROOT);
    private String server;
    private String address = "0.0.0.0";
    private int port = 8080;

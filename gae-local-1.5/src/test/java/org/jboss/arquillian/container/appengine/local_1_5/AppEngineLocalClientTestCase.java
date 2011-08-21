@@ -23,6 +23,7 @@
 package org.jboss.arquillian.container.appengine.local_1_5;
 
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -47,7 +48,7 @@ public class AppEngineLocalClientTestCase
     *
     * @return web archive
     */
-   @Deployment
+   @Deployment(name = "default")
    public static WebArchive getTestArchive()
    {
       return ShrinkWrap.create(WebArchive.class, "simple.war")
@@ -58,6 +59,7 @@ public class AppEngineLocalClientTestCase
    }
 
    @Test
+   @OperateOnDeployment("default")
    public void shouldBeAbleToInvokeServletInDeployedWebApp() throws Exception
    {
       String body = readAllAndClose(new URL("http://localhost:8080/test").openStream());

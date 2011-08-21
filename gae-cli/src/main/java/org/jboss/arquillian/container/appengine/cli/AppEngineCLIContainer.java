@@ -103,20 +103,4 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
 
       return value;
    }
-
-   protected static Object addArg(List<String> args, String key, Object value, String sysKey)
-   {
-      if (sysKey != null)
-         value = System.getProperty(sysKey, String.valueOf(value));
-
-      if (value == null)
-         throw new IllegalArgumentException("Missing argument value: " + key + " / " + sysKey);
-
-      if (sysKey != null)
-         System.setProperty(sysKey, String.valueOf(value));
-
-      args.add("--" + key + "=" + value);
-
-      return value;
-   }
 }

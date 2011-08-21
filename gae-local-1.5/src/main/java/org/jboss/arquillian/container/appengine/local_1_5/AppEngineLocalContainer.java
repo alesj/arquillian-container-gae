@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.arquillian.container.appengine.cli.AppEngineCLIContainer;
+import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
@@ -49,6 +50,11 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
    public void setup(AppEngineLocalConfiguration configuration)
    {
       this.configuration = configuration;
+
+      if (configuration.getSdkDir() == null)
+         throw new ConfigurationException("AppEngine SDK root is null.");
+
+      System.setProperty(AppEngineLocalConfiguration.SDK_ROOT, configuration.getSdkDir());
    }
 
    protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException
@@ -58,7 +64,7 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
          List<String> args = new ArrayList<String>();
          args.add("com.google.appengine.tools.development.DevAppServerMain"); // dev app server
 
-         String sdkDir = (String) addArg(args, "sdk_root", configuration.getSdkDir(), "appengine.sdk.root");
+         String sdkDir = (String) addArg(args, "sdk_root", configuration.getSdkDir(), false);
          if (new File(sdkDir).isDirectory() == false)
             throw new DeploymentException("SDK root is not a directory: " + sdkDir);
 
