@@ -45,6 +45,7 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration
    private String javaAgent;
    private String jvmFlags; //
    private String serverTestURL;
+   private long startupTimeout = 30; // 30sec
 
    public void validate() throws ConfigurationException
    {
@@ -138,5 +139,15 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration
    public void setServerTestURL(String serverTestURL)
    {
       this.serverTestURL = serverTestURL;
+   }
+
+   public long getStartupTimeout()
+   {
+      return startupTimeout;
+   }
+
+   public void setStartupTimeout(long startupTimeout)
+   {
+      this.startupTimeout = startupTimeout;
    }
 }

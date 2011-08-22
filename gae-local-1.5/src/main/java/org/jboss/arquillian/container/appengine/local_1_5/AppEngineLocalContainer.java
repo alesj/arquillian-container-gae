@@ -24,7 +24,6 @@ package org.jboss.arquillian.container.appengine.local_1_5;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -145,14 +144,16 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
       kickStartThread.start();
    }
 
-   protected void delayArchiveDeploy(long checkPeriod) throws MalformedURLException, InterruptedException
+   protected void delayArchiveDeploy(long checkPeriod) throws Exception
    {
       String serverURL = configuration.getServerTestURL();
       if (serverURL == null)
          serverURL = "http://localhost:" + configuration.getPort() + "/test";
-
       URL server = new URL(serverURL);
-      for (;;)
+      long startupTimeout = configuration.getStartupTimeout();
+      long timeout = startupTimeout * 1000;
+
+      while (timeout > 0)
       {
          Thread.sleep(checkPeriod);
          try
@@ -162,7 +163,10 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
          }
          catch (Throwable ignored)
          {
+            timeout -= checkPeriod;
          }
       }
+      if (timeout <= 0)
+         throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
    }
 }
