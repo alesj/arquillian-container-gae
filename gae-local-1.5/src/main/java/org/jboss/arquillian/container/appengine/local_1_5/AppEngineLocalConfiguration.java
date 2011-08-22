@@ -41,8 +41,10 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration
    private String address = "0.0.0.0";
    private int port = 8080;
    private boolean disableUpdateCheck;
+   private boolean startOnFirstThread = true;
    private String javaAgent;
    private String jvmFlags; //
+   private String serverTestURL;
 
    public void validate() throws ConfigurationException
    {
@@ -98,6 +100,16 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration
       this.disableUpdateCheck = disableUpdateCheck;
    }
 
+   public boolean isStartOnFirstThread()
+   {
+      return startOnFirstThread;
+   }
+
+   public void setStartOnFirstThread(boolean startOnFirstThread)
+   {
+      this.startOnFirstThread = startOnFirstThread;
+   }
+
    public String getJavaAgent()
    {
       return javaAgent;
@@ -116,5 +128,15 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration
    public void setJvmFlags(String jvmFlags)
    {
       this.jvmFlags = jvmFlags;
+   }
+
+   public String getServerTestURL()
+   {
+      return serverTestURL;
+   }
+
+   public void setServerTestURL(String serverTestURL)
+   {
+      this.serverTestURL = serverTestURL;
    }
 }

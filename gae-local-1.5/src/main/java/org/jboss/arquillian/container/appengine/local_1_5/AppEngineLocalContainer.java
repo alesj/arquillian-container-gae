@@ -24,6 +24,7 @@ package org.jboss.arquillian.container.appengine.local_1_5;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import org.jboss.shrinkwrap.api.Archive;
 public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLocalConfiguration>
 {
    private AppEngineLocalConfiguration configuration;
+   private Thread kickStartThread;
 
    public Class<AppEngineLocalConfiguration> getConfigurationClass()
    {
@@ -79,7 +81,8 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
 
          addArg(args, "address", configuration.getAddress(), false);
          addArg(args, "port", configuration.getPort(), false);
-         addArg(args, "disable_update_check", configuration.isDisableUpdateCheck());
+         addArg(args, "startOnFirstThread", configuration.isDisableUpdateCheck(), false);
+         addArg(args, "disable_update_check", configuration.isStartOnFirstThread());
          boolean isJavaAgentSet = (configuration.getJavaAgent() != null);
          if (isJavaAgentSet)
          {
@@ -91,6 +94,8 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
 
          invokeKickStart(args.toArray(new String[args.size()]));
 
+         delayArchiveDeploy(1000L);
+
          return getProtocolMetaData(configuration.getAddress(), configuration.getPort(), archive);
       }
       catch (Exception e)
@@ -99,7 +104,17 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
       }
    }
 
-   protected void invokeKickStart(Object args) throws Exception
+   @Override
+   protected void shutdownServer()
+   {
+      if (kickStartThread != null)
+      {
+         kickStartThread.interrupt();
+         kickStartThread = null;
+      }
+   }
+
+   protected void invokeKickStart(final Object args) throws Exception
    {
       File lib = new File(configuration.getSdkDir(), "lib");
       File tools = new File(lib, "appengine-tools-api.jar");
@@ -110,7 +125,44 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
       URL[] urls = new URL[]{url};
       ClassLoader cl = new URLClassLoader(urls);
       Class<?> kickStartClass = cl.loadClass("com.google.appengine.tools.KickStart");
-      Method main = kickStartClass.getMethod("main", String[].class);
-      main.invoke(null, args);
+      final Method main = kickStartClass.getMethod("main", String[].class);
+
+      Runnable runnable = new Runnable()
+      {
+         public void run()
+         {
+            try
+            {
+               main.invoke(null, args);
+            }
+            catch (Exception e)
+            {
+               throw new RuntimeException(e);
+            }
+         }
+      };
+      kickStartThread = new Thread(runnable, "AppEngine Local KickStart thread");
+      kickStartThread.start();
+   }
+
+   protected void delayArchiveDeploy(long checkPeriod) throws MalformedURLException, InterruptedException
+   {
+      String serverURL = configuration.getServerTestURL();
+      if (serverURL == null)
+         serverURL = "http://localhost:" + configuration.getPort() + "/test";
+
+      URL server = new URL(serverURL);
+      for (;;)
+      {
+         Thread.sleep(checkPeriod);
+         try
+         {
+            server.openStream();
+            break;
+         }
+         catch (Throwable ignored)
+         {
+         }
+      }
    }
 }
