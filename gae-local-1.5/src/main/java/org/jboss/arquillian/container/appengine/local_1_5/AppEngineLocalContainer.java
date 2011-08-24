@@ -71,11 +71,6 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
          if (new File(sdkDir).isDirectory() == false)
             throw new DeploymentException("SDK root is not a directory: " + sdkDir);
 
-         String classpath = System.getProperty("java.class.path");
-         String toolsJar = sdkDir + "/lib/appengine-tools-api.jar";
-         if (classpath.contains(toolsJar) == false)
-            System.setProperty("java.class.path", classpath + File.pathSeparator + toolsJar);
-
          addArg(args, "server", configuration.getServer(), true);
 
          addArg(args, "address", configuration.getAddress(), false);
