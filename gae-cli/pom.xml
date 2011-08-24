@@ -43,6 +43,11 @@
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-resource</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-impl</artifactId>
+        </dependency>
     </dependencies>
 </project>
 
