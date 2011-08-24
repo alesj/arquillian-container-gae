@@ -38,15 +38,16 @@ public class AppEngineRemoteConfiguration implements ContainerConfiguration
 
    private String sdkDir = System.getProperty(SDK_ROOT);
    private String email;
+   private String password = System.getProperty("appengine.password"); // TODO better
    private String host;
    private String encoding;
    private String proxy;
-   private boolean passIn;
+   private boolean passIn = true;
    private boolean prompt;
    private boolean splitJars;
    private boolean keepTempUploadDir;
    private String serverURL;
-   private long startupTimeout = 60; // 1min by default
+   private long startupTimeout = 600; // 10min by default
 
    public void validate() throws ConfigurationException
    {
@@ -70,6 +71,16 @@ public class AppEngineRemoteConfiguration implements ContainerConfiguration
    public void setEmail(String email)
    {
       this.email = email;
+   }
+
+   public String getPassword()
+   {
+      return password;
+   }
+
+   public void setPassword(String password)
+   {
+      this.password = password;
    }
 
    public String getHost()

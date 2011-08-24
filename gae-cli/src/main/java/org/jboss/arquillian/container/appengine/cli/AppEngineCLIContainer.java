@@ -55,6 +55,11 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
 
    protected void invokeAppEngine(String sdkDir, String appEngineClass, final Object args) throws Exception
    {
+      invokeAppEngine(null, sdkDir, appEngineClass, args);
+   }
+
+   protected void invokeAppEngine(ThreadGroup threads, String sdkDir, String appEngineClass, final Object args) throws Exception
+   {
       File lib = new File(sdkDir, "lib");
       File tools = new File(lib, "appengine-tools-api.jar");
       if (tools.exists() == false)
@@ -66,7 +71,15 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
       Class<?> kickStartClass = cl.loadClass(appEngineClass);
       final Method main = kickStartClass.getMethod("main", String[].class);
 
-      Runnable runnable = new Runnable()
+      Runnable runnable = createRunnable(threads, main, args);
+      appEngineThread = new Thread(threads, runnable, "AppEngine thread: " + getClass().getSimpleName());
+      appEngineThread.start();
+
+   }
+
+   protected Runnable createRunnable(final ThreadGroup threads, final Method main, final Object args)
+   {
+      return new Runnable()
       {
          public void run()
          {
@@ -80,9 +93,6 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
             }
          }
       };
-      appEngineThread = new Thread(runnable, "AppEngine thread: " + getClass().getSimpleName());
-      appEngineThread.start();
-
    }
 
    protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception
