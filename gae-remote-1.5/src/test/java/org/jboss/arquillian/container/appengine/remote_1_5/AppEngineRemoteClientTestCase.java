@@ -62,7 +62,7 @@ public class AppEngineRemoteClientTestCase
    @OperateOnDeployment("default")
    public void shouldBeAbleToInvokeServletInDeployedWebApp() throws Exception
    {
-      String body = readAllAndClose(new URL("http://localhost:8080/test").openStream());
+      String body = readAllAndClose(new URL("http://arquillian-gae.appspot.com/test").openStream());
 
       Assert.assertEquals(
             "Verify that the servlet was deployed and returns expected result",

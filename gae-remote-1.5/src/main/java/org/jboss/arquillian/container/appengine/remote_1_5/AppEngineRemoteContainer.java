@@ -107,7 +107,7 @@ public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRem
 
          invokeAppEngine(sdkDir, "com.google.appengine.tools.admin.AppCfg", args.toArray(new String[args.size()]));
 
-         delayArchiveDeploy(configuration.getServerURL(), configuration.getStartupTimeout(), 30000L);
+         delayArchiveDeploy(configuration.getServerURL() + "/test", configuration.getStartupTimeout(), 30000L);
 
          return getProtocolMetaData(configuration.getServerURL(), 80, archive);
       }
