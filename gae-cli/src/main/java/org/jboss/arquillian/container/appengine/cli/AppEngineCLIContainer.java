@@ -23,8 +23,12 @@
 
 package org.jboss.arquillian.container.appengine.cli;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +51,75 @@ import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
  */
 public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> extends AppEngineCommonContainer<T>
 {
+   private Thread appEngineThread;
+
+   protected void invokeAppEngine(String sdkDir, String appEngineClass, final Object args) throws Exception
+   {
+      File lib = new File(sdkDir, "lib");
+      File tools = new File(lib, "appengine-tools-api.jar");
+      if (tools.exists() == false)
+         throw new IllegalArgumentException("No AppEngine tools jar: " + tools);
+
+      URL url = tools.toURI().toURL();
+      URL[] urls = new URL[]{url};
+      ClassLoader cl = new URLClassLoader(urls);
+      Class<?> kickStartClass = cl.loadClass(appEngineClass);
+      final Method main = kickStartClass.getMethod("main", String[].class);
+
+      Runnable runnable = new Runnable()
+      {
+         public void run()
+         {
+            try
+            {
+               main.invoke(null, args);
+            }
+            catch (Exception e)
+            {
+               throw new RuntimeException(e);
+            }
+         }
+      };
+      appEngineThread = new Thread(runnable, "AppEngine thread: " + getClass().getSimpleName());
+      appEngineThread.start();
+
+   }
+
+   protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception
+   {
+      if (serverURL == null)
+         throw new IllegalArgumentException("Null server url");
+
+      URL server = new URL(serverURL);
+      long timeout = startupTimeout * 1000;
+
+      while (timeout > 0)
+      {
+         Thread.sleep(checkPeriod);
+         try
+         {
+            server.openStream();
+            break;
+         }
+         catch (Throwable ignored)
+         {
+            timeout -= checkPeriod;
+         }
+      }
+      if (timeout <= 0)
+         throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
+   }
+
+   @Override
+   protected void shutdownServer()
+   {
+      if (appEngineThread != null)
+      {
+         appEngineThread.interrupt();
+         appEngineThread = null;
+      }
+   }
+
    protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive)
    {
       HTTPContext httpContext = new HTTPContext(host, port);

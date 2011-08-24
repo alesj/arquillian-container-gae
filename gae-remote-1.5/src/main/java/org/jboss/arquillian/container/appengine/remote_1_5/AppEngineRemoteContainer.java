@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.arquillian.container.appengine.local_1_5;
+package org.jboss.arquillian.container.appengine.remote_1_5;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,27 +33,27 @@ import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaD
 import org.jboss.shrinkwrap.api.Archive;
 
 /**
- * Local / development AppEngine container.
+ * Remote / production AppEngine container.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLocalConfiguration>
+public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRemoteConfiguration>
 {
-   private AppEngineLocalConfiguration configuration;
+   private AppEngineRemoteConfiguration configuration;
 
-   public Class<AppEngineLocalConfiguration> getConfigurationClass()
+   public Class<AppEngineRemoteConfiguration> getConfigurationClass()
    {
-      return AppEngineLocalConfiguration.class;
+      return AppEngineRemoteConfiguration.class;
    }
 
-   public void setup(AppEngineLocalConfiguration configuration)
+   public void setup(AppEngineRemoteConfiguration configuration)
    {
       this.configuration = configuration;
 
       if (configuration.getSdkDir() == null)
          throw new ConfigurationException("AppEngine SDK root is null.");
 
-      System.setProperty(AppEngineLocalConfiguration.SDK_ROOT, configuration.getSdkDir());
+      System.setProperty(AppEngineRemoteConfiguration.SDK_ROOT, configuration.getSdkDir());
    }
 
    protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException
@@ -61,41 +61,28 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
       try
       {
          List<String> args = new ArrayList<String>();
-         args.add("com.google.appengine.tools.development.DevAppServerMain"); // dev app server
 
-         String sdkDir = (String) addArg(args, "sdk_root", configuration.getSdkDir(), false);
+         String sdkDir = configuration.getSdkDir();
          if (new File(sdkDir).isDirectory() == false)
             throw new DeploymentException("SDK root is not a directory: " + sdkDir);
 
-         String classpath = System.getProperty("java.class.path");
-         String toolsJar = sdkDir + "/lib/appengine-tools-api.jar";
-         if (classpath.contains(toolsJar) == false)
-            System.setProperty("java.class.path", classpath + File.pathSeparator + toolsJar);
-
-         addArg(args, "server", configuration.getServer(), true);
-
-         addArg(args, "address", configuration.getAddress(), false);
-         addArg(args, "port", configuration.getPort(), false);
-         addArg(args, "startOnFirstThread", configuration.isDisableUpdateCheck(), false);
-         addArg(args, "disable_update_check", configuration.isStartOnFirstThread());
-         boolean isJavaAgentSet = (configuration.getJavaAgent() != null);
-         if (isJavaAgentSet)
-         {
-            addArg(args, "jvm_flag", "-noverify", false);
-            addArg(args, "jvm_flag", "-javaagent:" + configuration.getJavaAgent(), false);
-         }
-         // TODO -- JVM FLAGS
+         addArg(args, "email", configuration.getEmail(), false);
+         addArg(args, "host", configuration.getHost(), true);
+         addArg(args, "compile_encoding", configuration.getEncoding(), true);
+         addArg(args, "proxy", configuration.getProxy(), true);
+         addArg(args, "passin", configuration.isPassIn());
+         if (configuration.isPassIn() == false)
+            addArg(args, "disable_prompt", configuration.isPrompt());
+         addArg(args, "enable_jar_splitting", configuration.isSplitJars());
+         addArg(args, "retain_upload_dir", configuration.isKeepTempUploadDir());
+         args.add("update");
          args.add(getAppLocation().getCanonicalPath());
 
-         invokeAppEngine(sdkDir, "com.google.appengine.tools.KickStart", args.toArray(new String[args.size()]));
+         invokeAppEngine(sdkDir, "com.google.appengine.tools.admin.AppCfg", args.toArray(new String[args.size()]));
 
-         String serverURL = configuration.getServerTestURL();
-         if (serverURL == null)
-            serverURL = "http://localhost:" + configuration.getPort() + "/test";
+         delayArchiveDeploy(configuration.getServerURL(), configuration.getStartupTimeout(), 5000L);
 
-         delayArchiveDeploy(serverURL, configuration.getStartupTimeout(), 1000L);
-
-         return getProtocolMetaData(configuration.getAddress(), configuration.getPort(), archive);
+         return getProtocolMetaData(configuration.getServerURL(), 80, archive);
       }
       catch (Exception e)
       {
