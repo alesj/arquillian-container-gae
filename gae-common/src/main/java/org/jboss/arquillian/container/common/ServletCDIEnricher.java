@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.container.appengine.embedded_1_4;
+package org.jboss.arquillian.container.common;
 
 import java.util.logging.Logger;
 import javax.enterprise.inject.spi.BeanManager;
@@ -31,7 +31,8 @@ public class ServletCDIEnricher extends CDIInjectionEnricher
 {
    private static final Logger log = Logger.getLogger(ServletCDIEnricher.class.getName());
 
-   protected BeanManager lookupBeanManager()
+   @Override
+   public BeanManager getBeanManager()
    {
       try
       {

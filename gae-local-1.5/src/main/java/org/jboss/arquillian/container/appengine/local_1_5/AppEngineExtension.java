@@ -22,7 +22,9 @@
 
 package org.jboss.arquillian.container.appengine.local_1_5;
 
+import org.jboss.arquillian.container.common.AppEngineDeploymentAppender;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
+import org.jboss.arquillian.container.test.spi.client.deployment.AuxiliaryArchiveAppender;
 import org.jboss.arquillian.core.spi.LoadableExtension;
 import org.kohsuke.MetaInfServices;
 
@@ -35,5 +37,6 @@ public class AppEngineExtension implements LoadableExtension
    public void register(ExtensionBuilder builder)
    {
       builder.service(DeployableContainer.class, AppEngineLocalContainer.class);
+      builder.service(AuxiliaryArchiveAppender.class, AppEngineDeploymentAppender.class);
    }
 }

@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.arquillian.container.appengine.embedded_1_4;
+package org.jboss.arquillian.container.common;
 
 import org.jboss.arquillian.container.test.spi.client.deployment.AuxiliaryArchiveAppender;
 import org.jboss.arquillian.test.spi.TestEnricher;
@@ -29,7 +29,6 @@ import org.jboss.arquillian.testenricher.resource.ResourceInjectionEnricher;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.kohsuke.MetaInfServices;
 
 
 /**
@@ -37,8 +36,7 @@ import org.kohsuke.MetaInfServices;
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-@MetaInfServices
-public class AppEngineEmbeddedDeploymentAppender implements AuxiliaryArchiveAppender
+public class AppEngineDeploymentAppender implements AuxiliaryArchiveAppender
 {
    public Archive<?> createAuxiliaryArchive()
    {
