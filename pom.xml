@@ -272,9 +272,9 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:git://github.com/alesj/arquillian-container-gae.git</connection>
-        <developerConnection>scm:git:git://github.com/alesj/arquillian-container-gae.git</developerConnection>
-        <url>scm:git:git://github.com/alesj/arquillian-container-gae.git</url>
+        <connection>scm:git:git@github.com:alesj/arquillian-container-gae.git</connection>
+        <developerConnection>scm:git:git@github.com:alesj/arquillian-container-gae.git</developerConnection>
+        <url>scm:git:git@github.com:alesj/arquillian-container-gae.git</url>
     </scm>
 
 </project>
