@@ -96,6 +96,14 @@
                 </configuration>
             </plugin>
 
+            <!-- Release -->
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <arguments>-Dappengine.sdk.root=${appengine.sdk.root}</arguments>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
