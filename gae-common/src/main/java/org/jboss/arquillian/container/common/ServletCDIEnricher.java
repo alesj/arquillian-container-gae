@@ -17,6 +17,7 @@
 package org.jboss.arquillian.container.common;
 
 import java.util.logging.Logger;
+
 import javax.enterprise.inject.spi.BeanManager;
 
 import org.jboss.arquillian.testenricher.cdi.CDIInjectionEnricher;
@@ -27,23 +28,18 @@ import org.jboss.arquillian.testenricher.cdi.CDIInjectionEnricher;
  * @author <a href="mailto:aslak@redhat.com">Aslak Knutsen</a>
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class ServletCDIEnricher extends CDIInjectionEnricher
-{
-   private static final Logger log = Logger.getLogger(ServletCDIEnricher.class.getName());
+public class ServletCDIEnricher extends CDIInjectionEnricher {
+    private static final Logger log = Logger.getLogger(ServletCDIEnricher.class.getName());
 
-   @Override
-   public BeanManager getBeanManager()
-   {
-      try
-      {
-         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-         Class<?> beanManagerAccessor = tccl.loadClass("org.jboss.seam.solder.beanManager.BeanManagerLocator");
-         return BeanManager.class.cast(beanManagerAccessor.getMethod("lookupBeanManager").invoke(null));
-      }
-      catch (Throwable t)
-      {
-         log.info("Skipping CDI injections. Either beans.xml is not present or the BeanManager could not be located using BeanManagerLocator from Seam Solder.");
-      }
-      return null;
-   }
+    @Override
+    public BeanManager getBeanManager() {
+        try {
+            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+            Class<?> beanManagerAccessor = tccl.loadClass("org.jboss.seam.solder.beanManager.BeanManagerLocator");
+            return BeanManager.class.cast(beanManagerAccessor.getMethod("lookupBeanManager").invoke(null));
+        } catch (Throwable t) {
+            log.info("Skipping CDI injections. Either beans.xml is not present or the BeanManager could not be located using BeanManagerLocator from Seam Solder.");
+        }
+        return null;
+    }
 }

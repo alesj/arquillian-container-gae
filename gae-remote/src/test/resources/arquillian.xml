@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian
+        >
+
+    <container qualifier="gae" default="true">
+        <configuration>
+            <property name="email">ales.justin@gmail.com</property>
+            <property name="serverURL">http://arquillian-gae.appspot.com</property>
+        </configuration>
+    </container>
+
+</arquillian>

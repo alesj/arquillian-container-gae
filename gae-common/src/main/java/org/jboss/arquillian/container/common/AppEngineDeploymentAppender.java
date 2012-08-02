@@ -36,20 +36,18 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class AppEngineDeploymentAppender implements AuxiliaryArchiveAppender
-{
-   public Archive<?> createAuxiliaryArchive()
-   {
-      return ShrinkWrap.create(JavaArchive.class, "arquillian-appengine-testenrichers.jar")
-                        .addPackages(
-                              false,
-                              ServletCDIEnricher.class.getPackage(),
-                              CDIInjectionEnricher.class.getPackage(),
-                              ResourceInjectionEnricher.class.getPackage())
-                        .addAsServiceProvider(
-                              TestEnricher.class,
-                              ServletCDIEnricher.class,
-                              ResourceInjectionEnricher.class);
-   }
+public class AppEngineDeploymentAppender implements AuxiliaryArchiveAppender {
+    public Archive<?> createAuxiliaryArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "arquillian-appengine-testenrichers.jar")
+                .addPackages(
+                        false,
+                        ServletCDIEnricher.class.getPackage(),
+                        CDIInjectionEnricher.class.getPackage(),
+                        ResourceInjectionEnricher.class.getPackage())
+                .addAsServiceProvider(
+                        TestEnricher.class,
+                        ServletCDIEnricher.class,
+                        ResourceInjectionEnricher.class);
+    }
 }
 

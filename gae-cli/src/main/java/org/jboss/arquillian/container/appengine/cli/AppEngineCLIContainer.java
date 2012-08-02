@@ -49,141 +49,113 @@ import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> extends AppEngineCommonContainer<T>
-{
-   private Thread appEngineThread;
+public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> extends AppEngineCommonContainer<T> {
+    private Thread appEngineThread;
 
-   protected void invokeAppEngine(String sdkDir, String appEngineClass, final Object args) throws Exception
-   {
-      invokeAppEngine(null, sdkDir, appEngineClass, args);
-   }
+    protected void invokeAppEngine(String sdkDir, String appEngineClass, final Object args) throws Exception {
+        invokeAppEngine(null, sdkDir, appEngineClass, args);
+    }
 
-   protected void invokeAppEngine(ThreadGroup threads, String sdkDir, String appEngineClass, final Object args) throws Exception
-   {
-      File lib = new File(sdkDir, "lib");
-      File tools = new File(lib, "appengine-tools-api.jar");
-      if (tools.exists() == false)
-         throw new IllegalArgumentException("No AppEngine tools jar: " + tools);
+    protected void invokeAppEngine(ThreadGroup threads, String sdkDir, String appEngineClass, final Object args) throws Exception {
+        File lib = new File(sdkDir, "lib");
+        File tools = new File(lib, "appengine-tools-api.jar");
+        if (tools.exists() == false)
+            throw new IllegalArgumentException("No AppEngine tools jar: " + tools);
 
-      URL url = tools.toURI().toURL();
-      URL[] urls = new URL[]{url};
-      ClassLoader cl = new URLClassLoader(urls);
-      Class<?> kickStartClass = cl.loadClass(appEngineClass);
-      final Method main = kickStartClass.getMethod("main", String[].class);
+        URL url = tools.toURI().toURL();
+        URL[] urls = new URL[]{url};
+        ClassLoader cl = new URLClassLoader(urls);
+        Class<?> kickStartClass = cl.loadClass(appEngineClass);
+        final Method main = kickStartClass.getMethod("main", String[].class);
 
-      Runnable runnable = createRunnable(threads, main, args);
-      appEngineThread = new Thread(threads, runnable, "AppEngine thread: " + getClass().getSimpleName());
-      appEngineThread.start();
+        Runnable runnable = createRunnable(threads, main, args);
+        appEngineThread = new Thread(threads, runnable, "AppEngine thread: " + getClass().getSimpleName());
+        appEngineThread.start();
 
-   }
+    }
 
-   protected Runnable createRunnable(final ThreadGroup threads, final Method main, final Object args)
-   {
-      return new Runnable()
-      {
-         public void run()
-         {
-            try
-            {
-               main.invoke(null, args);
+    protected Runnable createRunnable(final ThreadGroup threads, final Method main, final Object args) {
+        return new Runnable() {
+            public void run() {
+                try {
+                    main.invoke(null, args);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
-            catch (Exception e)
-            {
-               throw new RuntimeException(e);
+        };
+    }
+
+    protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception {
+        if (serverURL == null)
+            throw new IllegalArgumentException("Null server url");
+
+        URL server = new URL(serverURL);
+        long timeout = startupTimeout * 1000;
+
+        while (timeout > 0) {
+            Thread.sleep(checkPeriod);
+            try {
+                server.openStream();
+                break;
+            } catch (Throwable ignored) {
+                timeout -= checkPeriod;
             }
-         }
-      };
-   }
+        }
+        if (timeout <= 0)
+            throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
+    }
 
-   protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception
-   {
-      if (serverURL == null)
-         throw new IllegalArgumentException("Null server url");
+    @Override
+    protected void shutdownServer() {
+        if (appEngineThread != null) {
+            appEngineThread.interrupt();
+            appEngineThread = null;
+        }
+    }
 
-      URL server = new URL(serverURL);
-      long timeout = startupTimeout * 1000;
+    protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
+        HTTPContext httpContext = new HTTPContext(host, port);
+        Map<String, String> servlets = extractServlets(archive);
+        for (Map.Entry<String, String> entry : servlets.entrySet()) {
+            String name = entry.getKey();
+            String contextPath = entry.getValue();
+            httpContext.add(new Servlet(name, contextPath));
+        }
+        return new ProtocolMetaData().addContext(httpContext);
+    }
 
-      while (timeout > 0)
-      {
-         Thread.sleep(checkPeriod);
-         try
-         {
-            server.openStream();
-            break;
-         }
-         catch (Throwable ignored)
-         {
-            timeout -= checkPeriod;
-         }
-      }
-      if (timeout <= 0)
-         throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
-   }
+    protected static Map<String, String> extractServlets(Archive<?> archive) {
+        Node webXml = archive.get("WEB-INF/web.xml");
+        InputStream stream = webXml.getAsset().openStream();
+        try {
+            WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).from(stream);
+            List<ServletMappingDef> mappings = wad.getServletMappings();
+            Map<String, String> map = new HashMap<String, String>();
+            for (ServletMappingDef smd : mappings) {
+                map.put(smd.getServletName(), smd.getUrlPatterns().get(0));
+            }
+            return map;
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
 
-   @Override
-   protected void shutdownServer()
-   {
-      if (appEngineThread != null)
-      {
-         appEngineThread.interrupt();
-         appEngineThread = null;
-      }
-   }
+    protected static void addArg(List<String> args, String key, boolean condition) {
+        if (condition)
+            args.add("--" + key);
+    }
 
-   protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive)
-   {
-      HTTPContext httpContext = new HTTPContext(host, port);
-      Map<String, String> servlets = extractServlets(archive);
-      for (Map.Entry<String, String> entry : servlets.entrySet())
-      {
-         String name = entry.getKey();
-         String contextPath = entry.getValue();
-         httpContext.add(new Servlet(name, contextPath));
-      }
-      return new ProtocolMetaData().addContext(httpContext);
-   }
+    protected static Object addArg(List<String> args, String key, Object value, boolean optional) {
+        if (value == null && optional == false)
+            throw new IllegalArgumentException("Missing argument value: " + key);
 
-   protected static Map<String, String> extractServlets(Archive<?> archive)
-   {
-      Node webXml = archive.get("WEB-INF/web.xml");
-      InputStream stream = webXml.getAsset().openStream();
-      try
-      {
-         WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).from(stream);
-         List<ServletMappingDef> mappings = wad.getServletMappings();
-         Map<String, String> map = new HashMap<String, String>();
-         for (ServletMappingDef smd : mappings)
-         {
-            map.put(smd.getServletName(), smd.getUrlPatterns().get(0));
-         }
-         return map;
-      }
-      finally
-      {
-         try
-         {
-            stream.close();
-         }
-         catch (IOException ignored)
-         {
-         }
-      }
-   }
+        if (value != null)
+            args.add("--" + key + "=" + value);
 
-   protected static void addArg(List<String> args, String key, boolean condition)
-   {
-      if (condition)
-         args.add("--" + key);
-   }
-
-   protected static Object addArg(List<String> args, String key, Object value, boolean optional)
-   {
-      if (value == null && optional == false)
-         throw new IllegalArgumentException("Missing argument value: " + key);
-
-      if (value != null)
-         args.add("--" + key + "=" + value);
-
-      return value;
-   }
+        return value;
+    }
 }
