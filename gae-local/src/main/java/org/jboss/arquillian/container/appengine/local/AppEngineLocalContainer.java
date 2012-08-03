@@ -85,7 +85,7 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
 
             String serverURL = configuration.getServerTestURL();
             if (serverURL == null)
-                serverURL = "http://localhost:" + configuration.getPort() + "/test";
+                serverURL = "http://localhost:" + configuration.getPort() + "/_ah/admin";
 
             delayArchiveDeploy(serverURL, configuration.getStartupTimeout(), 1000L);
 

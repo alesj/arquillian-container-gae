@@ -37,7 +37,7 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration {
 
     private String sdkDir = System.getProperty(SDK_ROOT);
     private String server;
-    private String address = "0.0.0.0";
+    private String address = "localhost";
     private int port = 8080;
     private boolean disableUpdateCheck;
     private boolean startOnFirstThread = true;

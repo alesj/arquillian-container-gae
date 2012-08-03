@@ -29,9 +29,8 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.jboss.arquillian.container.common.AppEngineCommonContainer;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
@@ -116,26 +115,24 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
 
     protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
         HTTPContext httpContext = new HTTPContext(host, port);
-        Map<String, String> servlets = extractServlets(archive);
-        for (Map.Entry<String, String> entry : servlets.entrySet()) {
-            String name = entry.getKey();
-            String contextPath = entry.getValue();
-            httpContext.add(new Servlet(name, contextPath));
+        List<String> servlets = extractServlets(archive);
+        for (String name : servlets) {
+            httpContext.add(new Servlet(name, "")); // GAE apps have root context
         }
         return new ProtocolMetaData().addContext(httpContext);
     }
 
-    protected static Map<String, String> extractServlets(Archive<?> archive) {
+    protected static List<String> extractServlets(Archive<?> archive) {
         Node webXml = archive.get("WEB-INF/web.xml");
         InputStream stream = webXml.getAsset().openStream();
         try {
             WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).from(stream);
             List<ServletMappingDef> mappings = wad.getServletMappings();
-            Map<String, String> map = new HashMap<String, String>();
+            List<String> list = new ArrayList<String>();
             for (ServletMappingDef smd : mappings) {
-                map.put(smd.getServletName(), smd.getUrlPatterns().get(0));
+                list.add(smd.getServletName());
             }
-            return map;
+            return list;
         } finally {
             try {
                 stream.close();
