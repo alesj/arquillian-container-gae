@@ -33,11 +33,12 @@ import org.jboss.arquillian.container.spi.client.container.ContainerConfiguratio
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineRemoteConfiguration implements ContainerConfiguration {
-    public static final String SDK_ROOT = "appengine.sdk.root";
+    public static final String PREFIX = "appengine.";
+    public static final String SDK_ROOT = PREFIX + "sdk.root";
 
     private String sdkDir = System.getProperty(SDK_ROOT);
-    private String email;
-    private String password = System.getProperty("appengine.password"); // TODO better
+    private String email = System.getProperty(PREFIX + "email");
+    private String password = System.getProperty(PREFIX + "password"); // TODO better?
     private String host;
     private String encoding;
     private String proxy;
@@ -45,7 +46,7 @@ public class AppEngineRemoteConfiguration implements ContainerConfiguration {
     private boolean prompt;
     private boolean splitJars;
     private boolean keepTempUploadDir;
-    private String serverURL;
+    private String serverURL = System.getProperty(PREFIX + "server.url");
     private long startupTimeout = 600; // 10min by default
 
     public void validate() throws ConfigurationException {

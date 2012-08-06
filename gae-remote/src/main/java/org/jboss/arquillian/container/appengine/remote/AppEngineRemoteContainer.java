@@ -43,6 +43,7 @@ import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.Node;
 
 /**
  * Remote / production AppEngine container.
@@ -50,6 +51,8 @@ import org.jboss.shrinkwrap.api.Archive;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRemoteConfiguration> {
+    private static final String APPLICATION = "<application>";
+
     private AppEngineRemoteConfiguration configuration;
 
     public Class<AppEngineRemoteConfiguration> getConfigurationClass() {
@@ -99,9 +102,13 @@ public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRem
 
             invokeAppEngine(sdkDir, "com.google.appengine.tools.admin.AppCfg", args.toArray(new String[args.size()]));
 
-            delayArchiveDeploy(configuration.getServerURL() + "/_ah/admin", configuration.getStartupTimeout(), 30000L);
+            String serverURL = configuration.getServerURL();
+            if (serverURL == null)
+                serverURL = "http://" + readAppId(archive) + ".appspot.com";
 
-            return getProtocolMetaData(configuration.getServerURL(), 80, archive);
+            delayArchiveDeploy(serverURL + "/_ah/admin", configuration.getStartupTimeout(), 30 * 1000L);
+
+            return getProtocolMetaData(serverURL, 80, archive);
         } catch (Exception e) {
             List<String> args = Arrays.asList("rollback", app);
             try {
@@ -109,6 +116,37 @@ public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRem
             } catch (Exception ignored) {
             }
             throw new DeploymentException("Cannot deploy to local GAE.", e);
+        }
+    }
+
+    private String readAppId(Archive<?> archive) throws IOException {
+        Node webXml = archive.get("WEB-INF/appengine-web.xml");
+        InputStream is = webXml.getAsset().openStream();
+        try {
+            StringBuilder builder = new StringBuilder();
+            int x;
+            boolean isAppId = false;
+            StringBuilder appId = new StringBuilder();
+            while ((x = is.read()) != -1) {
+                char ch = (char) x;
+                if (isAppId) {
+                    if (ch == '<')
+                        break;
+                    else
+                        appId.append(ch);
+                } else {
+                    builder.append(ch);
+                }
+                if (isAppId == false && builder.toString().endsWith(APPLICATION)) {
+                    isAppId = true;
+                }
+            }
+            return appId.toString();
+        } finally {
+            try {
+                is.close();
+            } catch (IOException ignored) {
+            }
         }
     }
 
