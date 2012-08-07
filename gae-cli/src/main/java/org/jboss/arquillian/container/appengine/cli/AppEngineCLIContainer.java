@@ -89,9 +89,10 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
         if (serverURL == null)
             throw new IllegalArgumentException("Null server url");
 
-        URL server = new URL(serverURL);
-        long timeout = startupTimeout * 1000;
+        final URL server = new URL(serverURL);
+        log.info("Pinging server url: " + serverURL);
 
+        long timeout = startupTimeout * 1000;
         while (timeout > 0) {
             Thread.sleep(checkPeriod);
             try {

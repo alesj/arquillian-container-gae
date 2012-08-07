@@ -102,13 +102,19 @@ public class AppEngineRemoteContainer extends AppEngineCLIContainer<AppEngineRem
 
             invokeAppEngine(sdkDir, "com.google.appengine.tools.admin.AppCfg", args.toArray(new String[args.size()]));
 
+            String host = configuration.getHost();
+            if (host == null) {
+                host = readAppId(archive) + ".appspot.com";
+            }
+
             String serverURL = configuration.getServerURL();
-            if (serverURL == null)
-                serverURL = "http://" + readAppId(archive) + ".appspot.com";
+            if (serverURL == null) {
+                serverURL = "http://" + host;
+            }
 
-            delayArchiveDeploy(serverURL + "/_ah/admin", configuration.getStartupTimeout(), 30 * 1000L);
+            delayArchiveDeploy(serverURL + "/index.html", configuration.getStartupTimeout(), 60 * 1000L);
 
-            return getProtocolMetaData(serverURL, 80, archive);
+            return getProtocolMetaData(host, 80, archive);
         } catch (Exception e) {
             List<String> args = Arrays.asList("rollback", app);
             try {
