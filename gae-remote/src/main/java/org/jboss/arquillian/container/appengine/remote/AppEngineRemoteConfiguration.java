@@ -45,7 +45,7 @@ public class AppEngineRemoteConfiguration implements ContainerConfiguration {
     private boolean passIn = true;
     private boolean prompt;
     private boolean splitJars;
-    private boolean keepTempUploadDir;
+    private boolean keepTempUploadDir = Boolean.getBoolean(PREFIX + "keepTempUploadDir");
     private String serverURL = System.getProperty(PREFIX + "server.url");
     private long startupTimeout = 600; // 10min by default
 
