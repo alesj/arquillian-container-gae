@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <!-- Parent -->
     <parent>
@@ -22,8 +23,7 @@
     <!-- Properties -->
     <properties>
         <!-- minimum version known to work with tests (minimum recommended version) -->
-        <version.arquillian>1.0.0.Final</version.arquillian>
-        <version.shrinkwrap>1.0.0.Final</version.shrinkwrap>
+        <version.arquillian>1.0.1.Final</version.arquillian>
         <version.shrinkwrap.descriptors.spi>2.0.0-alpha-2</version.shrinkwrap.descriptors.spi>
         <version.shrinkwrap.descriptors.api>1.1.0-beta-1</version.shrinkwrap.descriptors.api>
         <version.shrinkwrap.descriptors.impl>1.1.0-beta-1</version.shrinkwrap.descriptors.impl>
@@ -204,35 +204,11 @@
             </dependency>
 
             <dependency>
-                <groupId>org.jboss.arquillian.container</groupId>
-                <artifactId>arquillian-container-spi</artifactId>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
                 <version>${version.arquillian}</version>
-            </dependency>
-
-            <!-- TODO We likely need a servlet packager to restrict use of EAR -->
-            <dependency>
-                <groupId>org.jboss.arquillian.protocol</groupId>
-                <artifactId>arquillian-protocol-servlet</artifactId>
-                <version>${version.arquillian}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.arquillian.testenricher</groupId>
-                <artifactId>arquillian-testenricher-cdi</artifactId>
-                <version>${version.arquillian}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.arquillian.testenricher</groupId>
-                <artifactId>arquillian-testenricher-resource</artifactId>
-                <version>${version.arquillian}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.arquillian.junit</groupId>
-                <artifactId>arquillian-junit-container</artifactId>
-                <version>${version.arquillian}</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>

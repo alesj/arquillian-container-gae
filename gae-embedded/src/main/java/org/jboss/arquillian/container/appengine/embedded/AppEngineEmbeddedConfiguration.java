@@ -26,7 +26,6 @@ package org.jboss.arquillian.container.appengine.embedded;
 import com.google.appengine.tools.development.DevAppServer;
 import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
-import org.jboss.arquillian.test.spi.ContainerProfile;
 
 /**
  * AppEngine 1.4.x configuration.
@@ -40,10 +39,6 @@ public class AppEngineEmbeddedConfiguration implements ContainerConfiguration {
 
     public void validate() throws ConfigurationException {
         // do nothing
-    }
-
-    public ContainerProfile getContainerProfile() {
-        return ContainerProfile.CLIENT;
     }
 
     public int getBindHttpPort() {
