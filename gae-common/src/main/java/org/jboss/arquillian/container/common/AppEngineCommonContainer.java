@@ -36,7 +36,6 @@ import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 
 /**
@@ -71,14 +70,14 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
         prepareArchive(archive);
 
-        ExplodedExporter exporter = archive.as(ExplodedExporter.class);
-        appLocation = exporter.exportExploded(
+        FixedExplodedExporter exporter = new FixedExplodedExporter(archive,
                 AccessController.doPrivileged(new PrivilegedAction<File>() {
                     public File run() {
                         return new File(System.getProperty("java.io.tmpdir"));
                     }
                 })
         );
+        appLocation = exporter.export();
 
         return doDeploy(archive);
     }
