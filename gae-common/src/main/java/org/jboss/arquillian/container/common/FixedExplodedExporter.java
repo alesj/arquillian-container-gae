@@ -14,7 +14,6 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Node;
-import org.jboss.shrinkwrap.api.exporter.ArchiveExportException;
 
 /**
  * This is a rip-off from ExplodedExporterDelegate. ;-)
@@ -108,8 +107,10 @@ class FixedExplodedExporter {
                     throw new IllegalArgumentException("Failed to write asset " + path + " to " + assetFile, e);
                 }
             }
+        } catch (final RuntimeException e) {
+            throw e;
         } catch (final Exception e) {
-            throw new ArchiveExportException("Unexpected error encountered in export of " + node, e);
+            throw new IllegalArgumentException("Unexpected error encountered in export of " + node, e);
         }
     }
 
