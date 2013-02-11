@@ -32,9 +32,19 @@ import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
+    private boolean updateCheck;
     private int port = 80;
     private long startupTimeout = 60 * 1000L; // 60sec
-    private String oAuthToken2;
+    private String userId = System.getProperty(PREFIX + "userId");
+    private String password = System.getProperty(PREFIX + "password"); // TODO better?
+
+    public boolean isUpdateCheck() {
+        return updateCheck;
+    }
+
+    public void setUpdateCheck(boolean updateCheck) {
+        this.updateCheck = updateCheck;
+    }
 
     public int getPort() {
         return port;
@@ -52,11 +62,19 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
         this.startupTimeout = startupTimeout;
     }
 
-    public String getOAuthToken2() {
-        return oAuthToken2;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setOAuthToken2(String oauthToken2) {
-        this.oAuthToken2 = oauthToken2;
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

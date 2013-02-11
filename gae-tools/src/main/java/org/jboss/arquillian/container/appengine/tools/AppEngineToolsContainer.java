@@ -25,15 +25,9 @@ package org.jboss.arquillian.container.appengine.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -42,6 +36,7 @@ import java.util.logging.Logger;
 import com.google.appengine.tools.admin.AppAdmin;
 import com.google.appengine.tools.admin.AppAdminFactory;
 import com.google.appengine.tools.admin.Application;
+import com.google.appengine.tools.admin.GenericApplication;
 import com.google.appengine.tools.admin.UpdateFailureEvent;
 import com.google.appengine.tools.admin.UpdateListener;
 import com.google.appengine.tools.admin.UpdateProgressEvent;
@@ -54,7 +49,6 @@ import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.Node;
 import org.xml.sax.SAXParseException;
 
 /**
@@ -74,40 +68,34 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
     }
 
     public void setup(AppEngineToolsConfiguration configuration) {
-        this.configuration = configuration;
-
         final String sdkDir = configuration.getSdkDir();
         if (sdkDir == null)
             throw new ConfigurationException("AppEngine SDK root is null.");
 
+        final String userId = configuration.getUserId();
+        if (userId == null)
+            throw new ConfigurationException("Null userId.");
+
+        final String password = configuration.getPassword();
+        if (password == null)
+            throw new ConfigurationException("Null password.");
+
         SdkInfo.setSdkRoot(new File(sdkDir));
+
+        this.configuration = configuration;
     }
 
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
         try {
-            UpdateCheck updateCheck = new UpdateCheck(SdkInfo.getDefaultServer());
-            if (updateCheck.allowedToCheckForUpdates()) {
-                updateCheck.maybePrintNagScreen(new PrintStream(System.out, true));
-            }
-
-            final AppAdmin appAdmin;
-            try {
-                appAdmin = createAppAdmin();
-            } catch (AppEngineConfigException e) {
-                if (e.getCause() instanceof SAXParseException) {
-                    String msg = e.getCause().getMessage();
-
-                    // have to check what the message says to distinguish a file-not-found
-                    // problem from some other xml problem.
-                    if (msg.contains("Failed to read schema document") && msg.contains("backends.xsd")) {
-                        throw new IllegalArgumentException("Deploying a project with backends requires App Engine SDK 1.5.0 or greater.", e);
-                    } else {
-                        throw e;
-                    }
-                } else {
-                    throw e;
+            if (configuration.isUpdateCheck()) {
+                UpdateCheck updateCheck = new UpdateCheck(SdkInfo.getDefaultServer());
+                if (updateCheck.allowedToCheckForUpdates()) {
+                    updateCheck.maybePrintNagScreen(new PrintStream(System.out, true));
                 }
             }
+
+            final GenericApplication app = readApplication();
+            final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
                     this,
@@ -133,11 +121,23 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
 
-            String appId = parseAppId(archive);
-
-            return getProtocolMetaData("http://" + appId + ".appspot.com", configuration.getPort(), archive);
+            return getProtocolMetaData("http://" + app.getAppId() + ".appspot.com", configuration.getPort(), archive);
         } catch (DeploymentException e) {
             throw e;
+        } catch (AppEngineConfigException e) {
+            if (e.getCause() instanceof SAXParseException) {
+                String msg = e.getCause().getMessage();
+
+                // have to check what the message says to distinguish a file-not-found
+                // problem from some other xml problem.
+                if (msg.contains("Failed to read schema document") && msg.contains("backends.xsd")) {
+                    throw new IllegalArgumentException("Deploying a project with backends requires App Engine SDK 1.5.0 or greater.", e);
+                } else {
+                    throw e;
+                }
+            } else {
+                throw e;
+            }
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -150,7 +150,11 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         return Executors.newSingleThreadExecutor();
     }
 
-    AppAdmin createAppAdmin() throws IOException {
+    protected GenericApplication readApplication() throws IOException {
+        return Application.readApplication(getAppLocation().getCanonicalPath());
+    }
+
+    AppAdmin createAppAdmin(GenericApplication app) throws IOException {
         AppAdminFactory appAdminFactory = new AppAdminFactory();
 
         /**
@@ -163,16 +167,19 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
          }
          */
 
-        AppAdminFactory.ConnectOptions appEngineConnectOptions = new AppAdminFactory.ConnectOptions();
-        if (configuration.getOAuthToken2() != null) {
-            appEngineConnectOptions.setOauthToken(configuration.getOAuthToken2());
-        }
+        final AppAdminFactory.ConnectOptions appEngineConnectOptions = new AppAdminFactory.ConnectOptions();
         String appengineServer = System.getenv("APPENGINE_SERVER");
         if (appengineServer != null) {
             appEngineConnectOptions.setServer(appengineServer);
         }
+        appEngineConnectOptions.setUserId(configuration.getUserId());
+        // TODO -- better prompt?
+        appEngineConnectOptions.setPasswordPrompt(new AppAdminFactory.PasswordPrompt() {
+            public String getPassword() {
+                return configuration.getPassword();
+            }
+        });
 
-        Application app = Application.readApplication(getAppLocation().getCanonicalPath());
         PrintWriter errorWriter = new PrintWriter(System.err, true);
 
         return appAdminFactory.createAppAdmin(appEngineConnectOptions, app, errorWriter);
@@ -350,62 +357,6 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
          */
         public void println(String s) {
             outputWriter.println(s);
-        }
-    }
-
-    private static final String APPLICATION = "<application>";
-
-    protected String parseAppId(Archive<?> archive) throws Exception {
-        Node node = archive.get("WEB-INF/appengine-web.xml");
-        if (node == null) {
-            throw new IllegalArgumentException("No appengine-web.xml file exists!");
-        }
-
-        Set<String> tokens = new HashSet<String>(Collections.singleton(APPLICATION));
-        Map<String, String> map = parseTokens(node.getAsset().openStream(), tokens);
-        return map.get(APPLICATION);
-    }
-
-    private Map<String, String> parseTokens(InputStream is, final Set<String> tokens) throws Exception {
-        final Map<String, String> results = new HashMap<String, String>();
-        try {
-            StringBuilder builder = new StringBuilder();
-            int x;
-            String token = null;
-            StringBuilder tokenBuilder = new StringBuilder();
-            while ((x = is.read()) != -1) {
-                char ch = (char) x;
-                if (token != null) {
-                    if (ch == '<') {
-                        results.put(token, tokenBuilder.toString());
-                        if (tokens.isEmpty()) {
-                            break;
-                        } else {
-                            token = null;
-                            tokenBuilder.setLength(0); // reset builder
-                        }
-                    } else {
-                        tokenBuilder.append(ch);
-                    }
-                } else {
-                    builder.append(ch);
-                }
-                // check if we hit any token
-                if (token == null) {
-                    for (String t : tokens) {
-                        if (builder.toString().endsWith(t)) {
-                            token = t;
-                            break;
-                        }
-                    }
-                    if (token != null) {
-                        tokens.remove(token);
-                    }
-                }
-            }
-            return results;
-        } finally {
-            safeClose(is);
         }
     }
 }

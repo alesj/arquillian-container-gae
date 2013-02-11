@@ -32,8 +32,6 @@ import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineRemoteConfiguration extends AppEngineCommonConfiguration {
-    public static final String PREFIX = "appengine.";
-
     private String email = System.getProperty(PREFIX + "email");
     private String password = System.getProperty(PREFIX + "password"); // TODO better?
     private String host;

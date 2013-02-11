@@ -16,6 +16,19 @@
     <name>Arquillian Container GAE Tools 1.x</name>
     <description>GAE Tools 1.5 Container integration for the Arquillian project</description>
 
+    <!-- Skip tools tests by default -->
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
     <dependencies>
 
         <dependency>

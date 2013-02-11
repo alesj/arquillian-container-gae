@@ -30,7 +30,8 @@ import org.jboss.arquillian.container.spi.client.container.ContainerConfiguratio
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public abstract class AppEngineCommonConfiguration implements ContainerConfiguration {
-    public static final String SDK_ROOT = "appengine.sdk.root";
+    public static final String PREFIX = "appengine.";
+    public static final String SDK_ROOT = PREFIX + "sdk.root";
 
     private String sdkDir = System.getProperty(SDK_ROOT);
 
