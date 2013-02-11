@@ -3,4 +3,9 @@
 *.iws
 *.iml
 target/
-gae-embedded-1.4/target
+gae-cli/target
+gae-common/target
+gae-embedded/target
+gae-local/target
+gae-remote/target
+gae-tools/target

@@ -12,14 +12,26 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.jboss.arquillian.container</groupId>
-    <artifactId>arquillian-gae-cli</artifactId>
-    <name>Arquillian Container GAE CLI</name>
-    <description>GAE CLI Container integration for the Arquillian project</description>
+    <artifactId>arquillian-gae-tools</artifactId>
+    <name>Arquillian Container GAE Tools 1.x</name>
+    <description>GAE Tools 1.5 Container integration for the Arquillian project</description>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.google.appengine</groupId>
+            <artifactId>appengine-tools-sdk</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
-            <artifactId>arquillian-gae-common</artifactId>
+            <artifactId>arquillian-gae-cli</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -42,6 +54,36 @@
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-resource</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>
 

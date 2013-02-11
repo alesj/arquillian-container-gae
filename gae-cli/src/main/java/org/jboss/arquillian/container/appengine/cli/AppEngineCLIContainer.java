@@ -24,24 +24,13 @@
 package org.jboss.arquillian.container.appengine.cli;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.arquillian.container.common.AppEngineCommonContainer;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.Node;
-import org.jboss.shrinkwrap.descriptor.api.Descriptors;
-import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.ServletMappingDef;
-import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
 
 /**
  * AppEngine CLI container.
@@ -111,34 +100,6 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
         if (appEngineThread != null) {
             appEngineThread.interrupt();
             appEngineThread = null;
-        }
-    }
-
-    protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
-        HTTPContext httpContext = new HTTPContext(host, port);
-        List<String> servlets = extractServlets(archive);
-        for (String name : servlets) {
-            httpContext.add(new Servlet(name, "")); // GAE apps have root context
-        }
-        return new ProtocolMetaData().addContext(httpContext);
-    }
-
-    protected static List<String> extractServlets(Archive<?> archive) {
-        Node webXml = archive.get("WEB-INF/web.xml");
-        InputStream stream = webXml.getAsset().openStream();
-        try {
-            WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).from(stream);
-            List<ServletMappingDef> mappings = wad.getServletMappings();
-            List<String> list = new ArrayList<String>();
-            for (ServletMappingDef smd : mappings) {
-                list.add(smd.getServletName());
-            }
-            return list;
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException ignored) {
-            }
         }
     }
 

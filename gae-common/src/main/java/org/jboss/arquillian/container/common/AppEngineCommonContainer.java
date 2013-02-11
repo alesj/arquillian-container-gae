@@ -24,8 +24,11 @@ package org.jboss.arquillian.container.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,9 +37,15 @@ import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.ServletMappingDef;
+import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
 
 /**
  * Common GAE Arquillian container.
@@ -92,6 +101,34 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     public void undeploy(Descriptor descriptor) throws DeploymentException {
+    }
+
+    protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
+        HTTPContext httpContext = new HTTPContext(host, port);
+        List<String> servlets = extractServlets(archive);
+        for (String name : servlets) {
+            httpContext.add(new Servlet(name, "")); // GAE apps have root context
+        }
+        return new ProtocolMetaData().addContext(httpContext);
+    }
+
+    protected static List<String> extractServlets(Archive<?> archive) {
+        Node webXml = archive.get("WEB-INF/web.xml");
+        InputStream stream = webXml.getAsset().openStream();
+        try {
+            WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).fromStream(stream);
+            List<ServletMappingDef> mappings = wad.getServletMappings();
+            List<String> list = new ArrayList<String>();
+            for (ServletMappingDef smd : mappings) {
+                list.add(smd.getServletName());
+            }
+            return list;
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     /**
