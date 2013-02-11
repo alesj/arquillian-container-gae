@@ -24,19 +24,16 @@
 package org.jboss.arquillian.container.appengine.remote;
 
 
-import org.jboss.arquillian.container.spi.ConfigurationException;
-import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
+import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
 
 /**
  * AppEngine remote configuration.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class AppEngineRemoteConfiguration implements ContainerConfiguration {
+public class AppEngineRemoteConfiguration extends AppEngineCommonConfiguration {
     public static final String PREFIX = "appengine.";
-    public static final String SDK_ROOT = PREFIX + "sdk.root";
 
-    private String sdkDir = System.getProperty(SDK_ROOT);
     private String email = System.getProperty(PREFIX + "email");
     private String password = System.getProperty(PREFIX + "password"); // TODO better?
     private String host;
@@ -48,17 +45,6 @@ public class AppEngineRemoteConfiguration implements ContainerConfiguration {
     private boolean keepTempUploadDir = Boolean.getBoolean(PREFIX + "keepTempUploadDir");
     private String serverURL = System.getProperty(PREFIX + "server.url");
     private long startupTimeout = 600; // 10min by default
-
-    public void validate() throws ConfigurationException {
-    }
-
-    public void setSdkDir(String sdkDir) {
-        this.sdkDir = sdkDir;
-    }
-
-    public String getSdkDir() {
-        return sdkDir;
-    }
 
     public String getEmail() {
         return email;

@@ -24,22 +24,17 @@ package org.jboss.arquillian.container.appengine.embedded;
 
 
 import com.google.appengine.tools.development.DevAppServer;
-import org.jboss.arquillian.container.spi.ConfigurationException;
-import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
+import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
 
 /**
  * AppEngine 1.4.x configuration.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class AppEngineEmbeddedConfiguration implements ContainerConfiguration {
+public class AppEngineEmbeddedConfiguration extends AppEngineCommonConfiguration {
     private String bindAddress = DevAppServer.DEFAULT_HTTP_ADDRESS;
 
     private int bindHttpPort = DevAppServer.DEFAULT_HTTP_PORT;
-
-    public void validate() throws ConfigurationException {
-        // do nothing
-    }
 
     public int getBindHttpPort() {
         return bindHttpPort;

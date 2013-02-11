@@ -24,18 +24,14 @@
 package org.jboss.arquillian.container.appengine.local;
 
 
-import org.jboss.arquillian.container.spi.ConfigurationException;
-import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
+import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
 
 /**
  * AppEngine CLI configuration.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class AppEngineLocalConfiguration implements ContainerConfiguration {
-    public static final String SDK_ROOT = "appengine.sdk.root";
-
-    private String sdkDir = System.getProperty(SDK_ROOT);
+public class AppEngineLocalConfiguration extends AppEngineCommonConfiguration {
     private String server;
     private String address = "localhost";
     private int port = 8080;
@@ -45,17 +41,6 @@ public class AppEngineLocalConfiguration implements ContainerConfiguration {
     private String jvmFlags; //
     private String serverTestURL;
     private long startupTimeout = 30; // 30sec
-
-    public void validate() throws ConfigurationException {
-    }
-
-    public void setSdkDir(String sdkDir) {
-        this.sdkDir = sdkDir;
-    }
-
-    public String getSdkDir() {
-        return sdkDir;
-    }
 
     public String getServer() {
         return server;
