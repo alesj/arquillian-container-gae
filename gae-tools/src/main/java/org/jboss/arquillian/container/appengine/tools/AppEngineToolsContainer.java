@@ -390,7 +390,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             }
             return results;
         } finally {
-            is.close();
+            safeClose(is);
         }
     }
 }

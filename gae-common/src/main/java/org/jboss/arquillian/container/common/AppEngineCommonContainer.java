@@ -22,6 +22,7 @@
 
 package org.jboss.arquillian.container.common;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -124,10 +125,14 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
             }
             return list;
         } finally {
-            try {
-                stream.close();
-            } catch (IOException ignored) {
-            }
+            safeClose(stream);
+        }
+    }
+
+    protected static void safeClose(Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException ignored) {
         }
     }
 
