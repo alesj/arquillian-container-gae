@@ -110,6 +110,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             }
 
             final DeployUpdateListener listener = new DeployUpdateListener(
+                    this,
                     new PrintWriter(System.out, true),
                     new PrintWriter(System.err, true)
             );
@@ -120,10 +121,12 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 }
             });
 
-            Status status = null;
-            while (status == null) {
-                Thread.sleep(configuration.getStartupTimeout());
-                status = listener.getStatus();
+            Status status;
+            synchronized (this) {
+                do {
+                    wait(configuration.getStartupTimeout());
+                    status = listener.getStatus();
+                } while (status == null); // guard against spurious wakeup
             }
 
             if (status != Status.OK) {
@@ -136,6 +139,9 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         } catch (DeploymentException e) {
             throw e;
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             throw new DeploymentException("Cannot deploy via GAE tools.", e);
         }
     }
@@ -267,18 +273,19 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             return false;
         }
 
+        private final Object waiter;
         private final PrintWriter errorWriter;
-        private MessageHeaders messageHeaders;
         private final PrintWriter outputWriter;
 
+        private MessageHeaders messageHeaders;
         private int percentDone = 0;
-
         private Status status = null;
 
-        private DeployUpdateListener(PrintWriter outputWriter, PrintWriter errorWriter) {
+        private DeployUpdateListener(Object waiter, PrintWriter outputWriter, PrintWriter errorWriter) {
+            this.waiter = waiter;
             this.outputWriter = outputWriter;
             this.errorWriter = errorWriter;
-            messageHeaders = new MessageHeaders();
+            this.messageHeaders = new MessageHeaders();
         }
 
         public Status getStatus() {
@@ -296,6 +303,10 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 if (details != null) {
                     outputWriter.println(details);
                 }
+            }
+
+            synchronized (waiter) {
+                waiter.notify();
             }
         }
 
@@ -328,6 +339,10 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             }
 
             outputWriter.println("\nDeployment completed successfully");
+
+            synchronized (waiter) {
+                waiter.notify();
+            }
         }
 
         /**

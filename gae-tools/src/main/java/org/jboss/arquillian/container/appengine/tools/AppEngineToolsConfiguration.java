@@ -33,7 +33,7 @@ import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
  */
 public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
     private int port = 80;
-    private long startupTimeout = 3000L; // 3sec
+    private long startupTimeout = 60 * 1000L; // 60sec
     private String oAuthToken2;
 
     public int getPort() {
