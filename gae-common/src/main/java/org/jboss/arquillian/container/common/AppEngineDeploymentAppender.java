@@ -23,31 +23,21 @@
 package org.jboss.arquillian.container.common;
 
 import org.jboss.arquillian.container.test.spi.client.deployment.AuxiliaryArchiveAppender;
-import org.jboss.arquillian.test.spi.TestEnricher;
-import org.jboss.arquillian.testenricher.cdi.CDIInjectionEnricher;
-import org.jboss.arquillian.testenricher.resource.ResourceInjectionEnricher;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
-
 /**
- * Package the test enrichers supported by the AppEngine Embedded 1.4.x Container plugin.
+ * Package the test enrichers supported by the AppEngine Container.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineDeploymentAppender implements AuxiliaryArchiveAppender {
     public Archive<?> createAuxiliaryArchive() {
-        return ShrinkWrap.create(JavaArchive.class, "arquillian-appengine-testenrichers.jar")
-                .addPackages(
-                        false,
-                        ServletCDIEnricher.class.getPackage(),
-                        CDIInjectionEnricher.class.getPackage(),
-                        ResourceInjectionEnricher.class.getPackage())
-                .addAsServiceProvider(
-                        TestEnricher.class,
-                        ServletCDIEnricher.class,
-                        ResourceInjectionEnricher.class);
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "arquillian-appengine-testenrichers.jar");
+        jar.addAsResource(new StringAsset("Add GAE test enrichers here!"), "README.txt");
+        return jar;
     }
 }
 
