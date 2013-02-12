@@ -121,7 +121,9 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
 
-            return getProtocolMetaData("http://" + app.getAppId() + ".appspot.com", configuration.getPort(), archive);
+            final String id = app.getVersion() + "." + app.getAppId();
+
+            return getProtocolMetaData("http://" + id + ".appspot.com", configuration.getPort(), archive);
         } catch (DeploymentException e) {
             throw e;
         } catch (AppEngineConfigException e) {
