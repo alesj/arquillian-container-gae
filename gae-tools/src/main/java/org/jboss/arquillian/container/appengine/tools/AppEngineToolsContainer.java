@@ -123,7 +123,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
 
             final String id = app.getVersion() + "." + app.getAppId();
 
-            return getProtocolMetaData("http://" + id + ".appspot.com", configuration.getPort(), archive);
+            return getProtocolMetaData(id + ".appspot.com", configuration.getPort(), archive);
         } catch (DeploymentException e) {
             throw e;
         } catch (AppEngineConfigException e) {
