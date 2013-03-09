@@ -54,6 +54,7 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
     }
 
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
+        final String classpath = System.getProperty("java.class.path");
         try {
             List<String> args = new ArrayList<String>();
             args.add("com.google.appengine.tools.development.DevAppServerMain"); // dev app server
@@ -62,10 +63,11 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
             if (new File(sdkDir).isDirectory() == false)
                 throw new DeploymentException("SDK root is not a directory: " + sdkDir);
 
-            String classpath = System.getProperty("java.class.path");
             String toolsJar = sdkDir + "/lib/appengine-tools-api.jar";
-            if (classpath.contains(toolsJar) == false)
-                System.setProperty("java.class.path", classpath + File.pathSeparator + toolsJar);
+            if (new File(toolsJar).exists() == false)
+                throw new DeploymentException("No appengine-tools-api.jar: " + toolsJar);
+
+            System.setProperty("java.class.path", toolsJar);
 
             addArg(args, "server", configuration.getServer(), true);
 
@@ -92,6 +94,8 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
             return getProtocolMetaData(configuration.getAddress(), configuration.getPort(), archive);
         } catch (Exception e) {
             throw new DeploymentException("Cannot deploy to local GAE.", e);
+        } finally {
+            System.setProperty("java.class.path", classpath);
         }
     }
 }
