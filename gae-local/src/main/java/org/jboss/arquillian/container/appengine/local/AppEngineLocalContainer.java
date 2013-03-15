@@ -25,6 +25,7 @@ package org.jboss.arquillian.container.appengine.local;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.jboss.arquillian.container.appengine.cli.AppEngineCLIContainer;
 import org.jboss.arquillian.container.spi.ConfigurationException;
@@ -38,6 +39,9 @@ import org.jboss.shrinkwrap.api.Archive;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLocalConfiguration> {
+    private static final String JVM_FLAG = "jvm_flag";
+    private static final String APPENGINE_TEST = "appengine.test.";
+
     private AppEngineLocalConfiguration configuration;
 
     public Class<AppEngineLocalConfiguration> getConfigurationClass() {
@@ -77,9 +81,18 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
             addArg(args, "disable_update_check", configuration.isStartOnFirstThread());
             boolean isJavaAgentSet = (configuration.getJavaAgent() != null);
             if (isJavaAgentSet) {
-                addArg(args, "jvm_flag", "-noverify", false);
-                addArg(args, "jvm_flag", "-javaagent:" + configuration.getJavaAgent(), false);
+                jvm_flag(args, "-noverify");
+                jvm_flag(args, "-javaagent:" + configuration.getJavaAgent());
             }
+
+            // add and system properties starting with appengine.test.
+            Properties properties = System.getProperties();
+            for (String key : properties.stringPropertyNames()) {
+                if (key.startsWith(APPENGINE_TEST)) {
+                    jvm_flag(args, "-D" + key.substring(APPENGINE_TEST.length()) + "=" + properties.getProperty(key));
+                }
+            }
+
             // TODO -- JVM FLAGS
             args.add(getAppLocation().getCanonicalPath());
 
@@ -97,5 +110,9 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
         } finally {
             System.setProperty("java.class.path", classpath);
         }
+    }
+
+    protected static void jvm_flag(List<String> args, String value) {
+        addArg(args, JVM_FLAG, value, false);
     }
 }
