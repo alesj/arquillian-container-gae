@@ -85,7 +85,7 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
                 jvm_flag(args, "-javaagent:" + configuration.getJavaAgent());
             }
 
-            // add and system properties starting with appengine.test.
+            // add any system properties starting with appengine.test.
             Properties properties = System.getProperties();
             for (String key : properties.stringPropertyNames()) {
                 if (key.startsWith(APPENGINE_TEST)) {
