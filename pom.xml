@@ -39,6 +39,7 @@
     </properties>
 
     <modules>
+        <module>appscale-remote</module>
         <module>gae-common</module>
         <module>gae-embedded</module>
         <module>gae-cli</module>
