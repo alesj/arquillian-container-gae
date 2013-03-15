@@ -36,6 +36,7 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
 
     /**
      * The e-mail address to use as the app's admin.
+     * Use AppScale's admin email, otherwise tests block on password prompt.
      */
     private String email;
 

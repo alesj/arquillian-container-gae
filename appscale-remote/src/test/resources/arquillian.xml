@@ -5,6 +5,7 @@
     <container qualifier="appscale" default="true">
         <configuration>
             <property name="remoteHost">192.168.33.10</property>
+            <!-- Use AppScale's admin email, otherwise tests block on password prompt. -->
             <property name="email">email@domain.com</property>
         </configuration>
     </container>
