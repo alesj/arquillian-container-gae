@@ -123,7 +123,12 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
 
             final String id = app.getVersion() + "." + app.getAppId();
 
-            return getProtocolMetaData(id + ".appspot.com", configuration.getPort(), archive);
+            String server = configuration.getServer();
+            if (server == null) {
+                server = "appspot.com";
+            }
+
+            return getProtocolMetaData(id + "." + server, configuration.getPort(), archive);
         } catch (DeploymentException e) {
             throw e;
         } catch (AppEngineConfigException e) {
@@ -170,6 +175,8 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
          */
 
         final AppAdminFactory.ConnectOptions appEngineConnectOptions = new AppAdminFactory.ConnectOptions();
+        // APPENGINE_SERVER is server to upload the app.
+        //  The default is appspot.com, which is used for both upload and test container.
         String appengineServer = System.getenv("APPENGINE_SERVER");
         if (appengineServer != null) {
             appEngineConnectOptions.setServer(appengineServer);
