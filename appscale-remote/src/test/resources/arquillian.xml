@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://jboss.org/schema/arquillian"
+    xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <container qualifier="appscale" default="true">
+        <configuration>
+            <property name="remoteHost">192.168.33.10</property>
+            <!-- Use AppScale's admin email, otherwise tests block on password prompt. -->
+            <property name="email">email@domain.com</property>
+        </configuration>
+    </container>
+</arquillian>

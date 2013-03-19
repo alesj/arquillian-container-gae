@@ -80,6 +80,16 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
         prepareArchive(archive);
 
+        try {
+            appLocation = export(archive);
+        } catch (Exception e) {
+            throw new DeploymentException("Cannot export archive " + archive.getName() + ".", e);
+        }
+
+        return doDeploy(archive);
+    }
+
+    protected File export(Archive<?> archive) throws Exception {
         FixedExplodedExporter exporter = new FixedExplodedExporter(archive,
                 AccessController.doPrivileged(new PrivilegedAction<File>() {
                     public File run() {
@@ -87,9 +97,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
                     }
                 })
         );
-        appLocation = exporter.export();
-
-        return doDeploy(archive);
+        return exporter.export();
     }
 
     public void undeploy(Archive<?> archive) throws DeploymentException {
@@ -161,7 +169,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     /**
      * Teardown GAE Api Env.
      */
-    protected void teardown() {
+    protected void teardown() throws DeploymentException {
     }
 
     static void deleteRecursively(File file) throws IOException {
