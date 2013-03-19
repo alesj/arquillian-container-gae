@@ -33,6 +33,8 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
  */
 public class AppScaleRemoteConfiguration implements ContainerConfiguration {
+    private static final String APPSCALE = "appscale.";
+
     private long uploadTimeout = 30 * 1000L;
     private long removeTimeout = 15 * 1000L;
     private long deployTimeout = 150 * 1000L;
@@ -42,25 +44,17 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
      * The e-mail address to use as the app's admin.
      * Use AppScale's admin email, otherwise tests block on password prompt.
      */
-    private String email;
+    private String email = System.getProperty(APPSCALE + "email");
 
     /**
      * Host runing AppScale.
      */
-    private String remoteHost;
+    private String host = System.getProperty(APPSCALE + "host");
 
     @Override
     public void validate() throws ConfigurationException {
         Validate.notNullOrEmpty(email, "The e-mail address to use as the app's admin must be specified.");
-        Validate.notNullOrEmpty(remoteHost, "Host running AppScale must be specified.");
-    }
-
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-
-    public void setRemoteHost(String remoteHost) {
-        this.remoteHost = remoteHost;
+        Validate.notNullOrEmpty(host, "Host running AppScale must be specified.");
     }
 
     public String getEmail() {
@@ -69,6 +63,14 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
     }
 
     public long getUploadTimeout() {

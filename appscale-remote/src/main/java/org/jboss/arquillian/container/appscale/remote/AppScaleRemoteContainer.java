@@ -32,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,6 +60,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
  * To stop AppScale service on AppScale instance run "appscale down"
  *
  * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
+ * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRemoteConfiguration> {
     protected final Logger log = Logger.getLogger(getClass().getName());
@@ -90,12 +92,9 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         uploadDeploymentCmd.add("scp");
         uploadDeploymentCmd.add("-r");
         uploadDeploymentCmd.add(getAppLocation().getAbsolutePath());
-        uploadDeploymentCmd.add("root@" + configuration.getRemoteHost() + ":/root/");
+        uploadDeploymentCmd.add("root@" + configuration.getHost() + ":/root/");
 
-        List<String> deployCmd = new ArrayList<String>();
-        deployCmd.add("ssh");
-        deployCmd.add("root@" + configuration.getRemoteHost());
-        deployCmd.add("/usr/local/appscale-tools/bin/appscale-upload-app --email " + configuration.getEmail() + " --file /root/" + getAppLocation().getName() + "");
+        List<String> deployCmd = ssh("/usr/local/appscale-tools/bin/appscale-upload-app --email " + configuration.getEmail() + " --file /root/" + getAppLocation().getName());
 
         List<String> responses = new ArrayList<String>();
         try {
@@ -116,15 +115,8 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
     @Override
     protected void teardown() throws DeploymentException {
-        List<String> undeployCmd = new ArrayList<String>();
-        undeployCmd.add("ssh");
-        undeployCmd.add("root@" + configuration.getRemoteHost());
-        undeployCmd.add("/usr/local/appscale-tools/bin/appscale-remove-app --confirm --appname " + deploymentInfo.appName);
-
-        List<String> removeDeploymentArchive = new ArrayList<String>();
-        removeDeploymentArchive.add("ssh");
-        removeDeploymentArchive.add("root@" + configuration.getRemoteHost());
-        removeDeploymentArchive.add("rm -rf /root/" + getAppLocation().getName() + "");
+        List<String> undeployCmd = ssh("/usr/local/appscale-tools/bin/appscale-remove-app --confirm --appname " + deploymentInfo.appName);
+        List<String> removeDeploymentArchive = ssh("rm -rf /root/" + getAppLocation().getName());
 
         try {
             runCmd(undeployCmd, "undeploy", "./", null, configuration.getUndeployTimeout());
@@ -132,6 +124,10 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot undeploy from AppScale.", e);
         }
+    }
+
+    protected List<String> ssh(String last) {
+        return Arrays.asList("ssh", "root@" + configuration.getHost(), last);
     }
 
     void runCmd(List<String> command, String processName, String workingDirectory, List<String> responses, long timeout) throws InterruptedException {
