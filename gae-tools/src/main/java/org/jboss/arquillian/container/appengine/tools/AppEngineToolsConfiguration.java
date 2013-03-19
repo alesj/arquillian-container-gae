@@ -38,6 +38,11 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
     private String userId = System.getProperty(PREFIX + "userId");
     private String password = System.getProperty(PREFIX + "password"); // TODO better?
 
+    // This server is the app under test.
+    // See AppEngineToolsContainer.java for the APPENGINE_SERVER environment setting used to
+    // upload the app.
+    private String server = System.getProperty(PREFIX + "server"); //
+
     public boolean isUpdateCheck() {
         return updateCheck;
     }
@@ -76,5 +81,13 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getServer() {
+        return server;
+    }
+
+    public void setServer(String server) {
+        this.server = server;
     }
 }
