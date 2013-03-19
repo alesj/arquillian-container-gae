@@ -33,6 +33,10 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
  */
 public class AppScaleRemoteConfiguration implements ContainerConfiguration {
+    private long uploadTimeout = 30 * 1000L;
+    private long removeTimeout = 15 * 1000L;
+    private long deployTimeout = 150 * 1000L;
+    private long undeployTimeout = 75 * 1000L;
 
     /**
      * The e-mail address to use as the app's admin.
@@ -49,7 +53,6 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
     public void validate() throws ConfigurationException {
         Validate.notNullOrEmpty(email, "The e-mail address to use as the app's admin must be specified.");
         Validate.notNullOrEmpty(remoteHost, "Host running AppScale must be specified.");
-
     }
 
     public String getRemoteHost() {
@@ -68,4 +71,35 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
         this.email = email;
     }
 
+    public long getUploadTimeout() {
+        return uploadTimeout;
+    }
+
+    public void setUploadTimeout(long uploadTimeout) {
+        this.uploadTimeout = uploadTimeout;
+    }
+
+    public long getRemoveTimeout() {
+        return removeTimeout;
+    }
+
+    public void setRemoveTimeout(long removeTimeout) {
+        this.removeTimeout = removeTimeout;
+    }
+
+    public long getDeployTimeout() {
+        return deployTimeout;
+    }
+
+    public void setDeployTimeout(long deployTimeout) {
+        this.deployTimeout = deployTimeout;
+    }
+
+    public long getUndeployTimeout() {
+        return undeployTimeout;
+    }
+
+    public void setUndeployTimeout(long undeployTimeout) {
+        this.undeployTimeout = undeployTimeout;
+    }
 }

@@ -33,7 +33,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 public class AppScaleExtension implements LoadableExtension {
-
+    @SuppressWarnings("unchecked")
     @Override
     public void register(ExtensionBuilder builder) {
         builder.service(DeployableContainer.class, AppScaleRemoteContainer.class);

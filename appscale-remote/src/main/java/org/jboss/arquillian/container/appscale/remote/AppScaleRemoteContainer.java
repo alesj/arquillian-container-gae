@@ -47,14 +47,14 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 
 /**
  * Remote AppScale container.
- *
+ * <p/>
  * To execute tests on remote AppScale instance, you must
  * start AppScale service on remote host
  * and enable password-less ssh access to remote host.
- *
+ * <p/>
  * Enable password less access to remote host:
  * $ cat ~/.ssh/id_rsa.pub | ssh root@HOST "cat >> /root/.ssh/authorized_keys"
- *
+ * <p/>
  * To start AppScale service on AppScale instance run "appscale up"
  * To stop AppScale service on AppScale instance run "appscale down"
  *
@@ -62,6 +62,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
  */
 public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRemoteConfiguration> {
     protected final Logger log = Logger.getLogger(getClass().getName());
+    protected static final Pattern hostPortPattern = Pattern.compile("(http://[0-9\\.\\:]+)");
 
     private AppScaleRemoteConfiguration configuration;
     private DeploymentInfo deploymentInfo;
@@ -80,9 +81,6 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
     protected File export(Archive<?> archive) throws Exception {
         Archive<GenericArchive> appscaleArchive = ShrinkWrap.create(GenericArchive.class);
         appscaleArchive.merge(archive, "war");
-//        File tempFile = File.createTempFile("appscale-", ".tar.gz");
-//        appscaleArchive.as(TarGzExporter.class).exportTo(tempFile, true);
-//        return tempFile;
         return super.export(appscaleArchive);
     }
 
@@ -101,16 +99,16 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
         List<String> responses = new ArrayList<String>();
         try {
-            runCmd(uploadDeploymentCmd, "upload", "./", null);
-            runCmd(deployCmd, "deploy", "./", responses);
+            runCmd(uploadDeploymentCmd, "upload", "./", null, configuration.getUploadTimeout());
+            runCmd(deployCmd, "deploy", "./", responses, configuration.getDeployTimeout());
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot deploy to AppScale.", e);
         }
 
         deploymentInfo = parseUrlFromResponse(responses);
 
-        if (!deploymentInfo.isValid()) {
-            throw new DeploymentException("Could not deyploy.");
+        if (deploymentInfo.isValid() == false) {
+            throw new DeploymentException("Could not deploy, invalid reponse: " + deploymentInfo);
         }
 
         return getProtocolMetaData(deploymentInfo.host, deploymentInfo.port, archive);
@@ -129,14 +127,14 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         removeDeploymentArchive.add("rm -rf /root/" + getAppLocation().getName() + "");
 
         try {
-            runCmd(undeployCmd, "undeploy", "./", null);
-            runCmd(removeDeploymentArchive, "remove", "./", null);
+            runCmd(undeployCmd, "undeploy", "./", null, configuration.getUndeployTimeout());
+            runCmd(removeDeploymentArchive, "remove", "./", null, configuration.getRemoveTimeout());
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot undeploy from AppScale.", e);
         }
     }
 
-    void runCmd(List<String> command, String processName, String workingDirectory, List<String> responses) throws InterruptedException {
+    void runCmd(List<String> command, String processName, String workingDirectory, List<String> responses, long timeout) throws InterruptedException {
         log.log(Level.FINE, String.format("Process name='%s' command='%s' workingDirectory='%s'", processName, command, workingDirectory));
         final ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(new File(workingDirectory));
@@ -158,9 +156,8 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         stdoutThread.setName(String.format("stdout for %s", processName));
         stdoutThread.start();
 
-        stdoutThread.join();
-        stderrThread.join();
-        return;
+        stdoutThread.join(timeout);
+        stderrThread.join(timeout);
     }
 
     private final class ReadTask implements Runnable {
@@ -205,7 +202,6 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
     DeploymentInfo parseUrlFromResponse(List<String> responses) {
         DeploymentInfo deploymentInfo = new DeploymentInfo();
-        Pattern hostPortPattern = Pattern.compile("(http://[0-9\\.\\:]+)");
 
         for (String response : responses) {
             Matcher hostPortMatcher = hostPortPattern.matcher(response);
@@ -223,7 +219,8 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         return deploymentInfo;
     }
 
-    class DeploymentInfo {
+    static class DeploymentInfo {
+
         String appName;
         String host;
         Integer port;
