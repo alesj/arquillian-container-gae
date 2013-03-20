@@ -37,6 +37,7 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
     private long startupTimeout = 60 * 1000L; // 60sec
     private String userId = System.getProperty(PREFIX + "userId");
     private String password = System.getProperty(PREFIX + "password"); // TODO better?
+    private String appId = System.getProperty(PREFIX + "appId");
 
     // This server is the app under test.
     // See AppEngineToolsContainer.java for the APPENGINE_SERVER environment setting used to
@@ -81,6 +82,14 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
     }
 
     public String getServer() {

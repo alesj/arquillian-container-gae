@@ -94,7 +94,13 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 }
             }
 
-            final GenericApplication app = readApplication();
+            final Application app = readApplication();
+
+            String appId = configuration.getAppId();
+            if (appId != null) {
+                app.getAppEngineWebXml().setAppId(appId);
+            }
+
             final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
@@ -157,7 +163,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         return Executors.newSingleThreadExecutor();
     }
 
-    protected GenericApplication readApplication() throws IOException {
+    protected Application readApplication() throws IOException {
         return Application.readApplication(getAppLocation().getCanonicalPath());
     }
 
