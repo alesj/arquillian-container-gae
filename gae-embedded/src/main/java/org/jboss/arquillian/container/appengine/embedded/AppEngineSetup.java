@@ -40,16 +40,11 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 class AppEngineSetup {
     private static Logger log = Logger.getLogger(AppEngineSetup.class.getName());
 
-    private static final String LOCAL_MAVEN_REPO =
-            System.getProperty("user.home") + File.separatorChar +
-                    ".m2" + File.separatorChar + "repository";
+    private static final String LOCAL_MAVEN_REPO = System.getProperty("user.home") + File.separatorChar + ".m2" + File.separatorChar + "repository";
 
     private static final String GROUP_ID = "com.google.appengine";
-    private static final String VERSION = "1.7.0";
-
-    private static final String[] FILES = {
-            "appengine-api-1.0-sdk",
-    };
+    private static final String ARTIFACT_ID = "appengine-api-1.0-sdk";
+    private static final String VERSION = System.getProperty("appengine.version", "1.7.7.1");
 
     /**
      * Add class owner location to java.ext.dirs.
@@ -92,32 +87,43 @@ class AppEngineSetup {
      *
      * @param archive the current archive
      */
-    static void prepare(Archive archive) {
-        File[] files = getFiles();
+    static void prepare(AppEngineEmbeddedConfiguration configuration, Archive archive) {
+        File gaeAPI = getFile(configuration);
 
         WebArchive webArchive = archive.as(WebArchive.class);
-        webArchive.addAsLibraries(files);
+        webArchive.addAsLibraries(gaeAPI);
         webArchive.addClass(AppEngineHack.class); // hack
 
         log.info(webArchive.toString(true));
     }
 
-    private static File[] getFiles() {
-        File[] files = new File[FILES.length];
-        for (int i = 0; i < files.length; i++) {
-            File file = resolve(GROUP_ID, FILES[i], VERSION);
-            if (file.exists() == false)
-                throw new IllegalArgumentException("Missing AppEngine library: " + file);
-            files[i] = file;
+    private static File getFile(AppEngineEmbeddedConfiguration configuration) {
+        File file = null;
+
+        String sdkRoot = configuration.getSdkDir();
+        if (sdkRoot == null) {
+            file = resolve(GROUP_ID, ARTIFACT_ID, VERSION);
+        } else {
+            File userLib = new File(sdkRoot, "lib/user/");
+            for (File lib : userLib.listFiles()) {
+                if (lib.getName().startsWith(ARTIFACT_ID)) {
+                    file = lib;
+                    break;
+                }
+            }
         }
-        return files;
+
+        if (file == null || file.exists() == false)
+            throw new IllegalArgumentException("Missing AppEngine library: " + file);
+
+        return file;
     }
 
     private static File resolve(String groupId, String artifactId, String version) {
         return new File(LOCAL_MAVEN_REPO + File.separatorChar +
-                groupId.replace(".", File.separator) + File.separatorChar +
-                artifactId + File.separatorChar +
-                version + File.separatorChar +
-                artifactId + "-" + version + ".jar");
+            groupId.replace(".", File.separator) + File.separatorChar +
+            artifactId + File.separatorChar +
+            version + File.separatorChar +
+            artifactId + "-" + version + ".jar");
     }
 }

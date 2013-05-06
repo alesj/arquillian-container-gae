@@ -58,7 +58,7 @@ public class AppEngineEmbeddedContainer extends AppEngineCommonContainer<AppEngi
 
     protected void prepareArchive(Archive<?> archive) {
         // add a GAE libs
-        AppEngineSetup.prepare(archive);
+        AppEngineSetup.prepare(containerConfig, archive);
     }
 
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
