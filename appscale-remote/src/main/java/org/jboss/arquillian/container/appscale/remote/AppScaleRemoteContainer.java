@@ -209,7 +209,11 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
             }
             if (response.startsWith("Uploading")) {
-                deploymentInfo.appName = response.split("Uploading ")[1];
+                /* Expected responses are:
+		 * "Uploading new version of app {appName}"
+		 * "Uploading initial version of app {appName}"
+		 */
+	        deploymentInfo.appName = response.split("app ")[1];
             }
         }
         return deploymentInfo;
