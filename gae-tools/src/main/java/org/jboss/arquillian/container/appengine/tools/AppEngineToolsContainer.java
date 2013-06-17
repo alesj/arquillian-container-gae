@@ -127,7 +127,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
 
-            final String id = app.getVersion() + "." + app.getAppId();
+            final String id = app.getVersion() + "-dot-" + app.getAppId();
 
             String server = configuration.getServer();
             if (server == null) {
