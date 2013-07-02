@@ -101,6 +101,11 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 app.getAppEngineWebXml().setAppId(appId);
             }
 
+            String module = configuration.getModule();
+            if (module != null) {
+                app.getAppEngineWebXml().setModule(module);
+            }
+
             final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
@@ -127,7 +132,13 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
 
-            final String id = app.getVersion() + "." + app.getAppId();
+            String id;
+            if (module != null) {
+                id = app.getApiVersion() + "." + module + "." + app.getAppId();
+            } else {
+                id = app.getVersion() + "." + app.getAppId();
+
+            }
 
             String server = configuration.getServer();
             if (server == null) {
