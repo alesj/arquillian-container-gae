@@ -61,6 +61,8 @@ import org.xml.sax.SAXParseException;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineToolsConfiguration> {
+    private static final String DOT = "-dot-";
+
     private AppEngineToolsConfiguration configuration;
 
     public Class<AppEngineToolsConfiguration> getConfigurationClass() {
@@ -101,6 +103,11 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 app.getAppEngineWebXml().setAppId(appId);
             }
 
+            String module = configuration.getModule();
+            if (module != null) {
+                app.getAppEngineWebXml().setModule(module);
+            }
+
             final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
@@ -127,7 +134,12 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
 
-            final String id = app.getVersion() + "-dot-" + app.getAppId();
+            String id;
+            if (module != null) {
+                id = app.getApiVersion() + DOT + module + DOT + app.getAppId();
+            } else {
+                id = app.getVersion() + DOT + app.getAppId();
+            }
 
             String server = configuration.getServer();
             if (server == null) {
