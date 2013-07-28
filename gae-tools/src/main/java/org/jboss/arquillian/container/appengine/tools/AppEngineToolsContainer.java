@@ -228,6 +228,16 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             appEngineConnectOptions.setServer(appengineServer);
         }
 
+        // User/Password
+        appEngineConnectOptions.setUserId(configuration.getUserId());
+        // TODO -- better prompt?
+        appEngineConnectOptions.setPasswordPrompt(new AppAdminFactory.PasswordPrompt() {
+            public String getPassword() {
+                return configuration.getPassword();
+            }
+        });
+
+        // OAuth2
         String oauthToken = null;
         String configOauthToken = configuration.getOauth2token(); // -Dappengine.oauth2token=
         if (configOauthToken != null) {
@@ -240,12 +250,6 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         // if oauthToken is null, username/pw will be used.
         appEngineConnectOptions.setOauthToken(oauthToken);
 
-        // TODO -- better prompt?
-        appEngineConnectOptions.setPasswordPrompt(new AppAdminFactory.PasswordPrompt() {
-            public String getPassword() {
-                return configuration.getPassword();
-            }
-        });
 
         PrintWriter errorWriter = new PrintWriter(System.err, true);
 
