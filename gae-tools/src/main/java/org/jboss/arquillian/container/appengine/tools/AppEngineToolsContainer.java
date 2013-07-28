@@ -23,6 +23,27 @@
 
 package org.jboss.arquillian.container.appengine.tools;
 
+import com.google.appengine.repackaged.com.google.api.client.auth.oauth2.Credential;
+import com.google.appengine.tools.admin.AppAdmin;
+import com.google.appengine.tools.admin.AppAdminFactory;
+import com.google.appengine.tools.admin.Application;
+import com.google.appengine.tools.admin.GenericApplication;
+import com.google.appengine.tools.admin.OAuth2Native;
+import com.google.appengine.tools.admin.UpdateFailureEvent;
+import com.google.appengine.tools.admin.UpdateListener;
+import com.google.appengine.tools.admin.UpdateProgressEvent;
+import com.google.appengine.tools.admin.UpdateSuccessEvent;
+import com.google.appengine.tools.info.SdkInfo;
+import com.google.appengine.tools.info.UpdateCheck;
+import com.google.apphosting.utils.config.AppEngineConfigException;
+
+import org.jboss.arquillian.container.common.AppEngineCommonContainer;
+import org.jboss.arquillian.container.spi.ConfigurationException;
+import org.jboss.arquillian.container.spi.client.container.DeploymentException;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
+import org.jboss.shrinkwrap.api.Archive;
+import org.xml.sax.SAXParseException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -33,28 +54,8 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.appengine.tools.admin.AppAdmin;
-import com.google.appengine.tools.admin.AppAdminFactory;
-import com.google.appengine.tools.admin.Application;
-import com.google.appengine.tools.admin.GenericApplication;
-import com.google.appengine.tools.admin.UpdateFailureEvent;
-import com.google.appengine.tools.admin.UpdateListener;
-import com.google.appengine.tools.admin.UpdateProgressEvent;
-import com.google.appengine.tools.admin.UpdateSuccessEvent;
-import com.google.appengine.tools.info.SdkInfo;
-import com.google.appengine.tools.info.UpdateCheck;
-import com.google.apphosting.utils.config.AppEngineConfigException;
-import org.jboss.arquillian.container.common.AppEngineCommonContainer;
-import org.jboss.arquillian.container.spi.ConfigurationException;
-import org.jboss.arquillian.container.spi.client.container.DeploymentException;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
-import org.jboss.shrinkwrap.api.Archive;
-import org.xml.sax.SAXParseException;
-
 /**
- * Tools AppEngine container.
- * <p/>
- * Code taken from "http://code.google.com/p/google-plugin-for-eclipse/source/browse/trunk/plugins/com.google.appengine.eclipse.core/proxy_src/com/google/appengine/eclipse/core/proxy/AppEngineBridgeImpl.java?r=2"
+ * Tools AppEngine container. <p/> Code taken from "http://code.google.com/p/google-plugin-for-eclipse/source/browse/trunk/plugins/com.google.appengine.eclipse.core/proxy_src/com/google/appengine/eclipse/core/proxy/AppEngineBridgeImpl.java?r=2"
  * with permission from GAE team.
  *
  * @author GAE Team
@@ -74,13 +75,15 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         if (sdkDir == null)
             throw new ConfigurationException("AppEngine SDK root is null.");
 
-        final String userId = configuration.getUserId();
-        if (userId == null)
-            throw new ConfigurationException("Null userId.");
+        if (configuration.getOauth2token() == null) {
+            final String userId = configuration.getUserId();
+            if (userId == null)
+                throw new ConfigurationException("Null userId.");
 
-        final String password = configuration.getPassword();
-        if (password == null)
-            throw new ConfigurationException("Null password.");
+            final String password = configuration.getPassword();
+            if (password == null)
+                throw new ConfigurationException("Null password.");
+        }
 
         SdkInfo.setSdkRoot(new File(sdkDir));
 
@@ -111,9 +114,9 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
-                    this,
-                    new PrintWriter(System.out, true),
-                    new PrintWriter(System.err, true)
+                this,
+                new PrintWriter(System.out, true),
+                new PrintWriter(System.err, true)
             );
 
             getExecutor().execute(new Runnable() {
@@ -179,6 +182,31 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         return Application.readApplication(getAppLocation().getCanonicalPath());
     }
 
+    // Based on com.google.appengine.tools.admin.AppCfg.authorizedOauth2()
+    private String getOAuthToken() {
+        String runOauth2Msg = "Create ${HOME}/.appcfg_oauth2_tokens by running $appcfg.sh --oauth2 update YOUR-WAR-DIR";
+        String userDir = System.getProperty("user.home");
+        File tokenFile = new File(userDir, ".appcfg_oauth2_tokens_java");
+
+        if (!tokenFile.exists()) {
+            throw new ConfigurationException(runOauth2Msg);
+        }
+
+        boolean useCookies = true;  // use ${HOME}/.appcfg_oauth2_tokens_java
+        String oauth2ClientId = null;
+        String oauth2ClientSecret = null;
+        String oauth2RefreshToken = null;
+        OAuth2Native client = new OAuth2Native(useCookies, oauth2ClientId,
+                                               oauth2ClientSecret, oauth2RefreshToken);
+        Credential credential = client.authorize();
+
+        if (credential == null || credential.getAccessToken() == null) {
+            String errMsg = "Tokens expired? " + runOauth2Msg;
+            throw new ConfigurationException(errMsg);
+        }
+        return credential.getAccessToken();
+    }
+
     AppAdmin createAppAdmin(GenericApplication app) throws IOException {
         AppAdminFactory appAdminFactory = new AppAdminFactory();
 
@@ -199,7 +227,19 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         if (appengineServer != null) {
             appEngineConnectOptions.setServer(appengineServer);
         }
-        appEngineConnectOptions.setUserId(configuration.getUserId());
+
+        String oauthToken = null;
+        String configOauthToken = configuration.getOauth2token(); // -Dappengine.oauth2token=
+        if (configOauthToken != null) {
+            if (configOauthToken.trim().equals("")) {  // if blank token, get it from cookie.
+                oauthToken = getOAuthToken();
+            } else {
+                oauthToken = configOauthToken;
+            }
+        }
+        // if oauthToken is null, username/pw will be used.
+        appEngineConnectOptions.setOauthToken(oauthToken);
+
         // TODO -- better prompt?
         appEngineConnectOptions.setPasswordPrompt(new AppAdminFactory.PasswordPrompt() {
             public String getPassword() {
@@ -216,17 +256,17 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         private static final Logger log = Logger.getLogger(DeployUpdateListener.class.getName());
 
         /**
-         * Class for getting headers representing different stages of deployments
-         * bassed on console messages from the gae sdk.
+         * Class for getting headers representing different stages of deployments bassed on console
+         * messages from the gae sdk.
          */
         private static class MessageHeaders {
 
             // Headers should go in the order specified in this array.
             private static final PrefixHeaderPair[] prefixHeaderPairs = new PrefixHeaderPair[]{
-                    new PrefixHeaderPair("Preparing to deploy", null, "Created staging directory", "Scanning files on local disk"),
-                    new PrefixHeaderPair("Deploying", null, "Uploading"),
-                    new PrefixHeaderPair("Verifying availability", "Verifying availability of", "Will check again in 1 seconds."),
-                    new PrefixHeaderPair("Updating datastore", null, "Uploading index")};
+                new PrefixHeaderPair("Preparing to deploy", null, "Created staging directory", "Scanning files on local disk"),
+                new PrefixHeaderPair("Deploying", null, "Uploading"),
+                new PrefixHeaderPair("Verifying availability", "Verifying availability of", "Will check again in 1 seconds."),
+                new PrefixHeaderPair("Updating datastore", null, "Uploading index")};
 
             /*
              * The headers should go in the sequence specified in the array,
@@ -247,8 +287,8 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         }
 
         /**
-         * Class for holding the different gae sdk messages that are associated with
-         * different "headers", representing the stages of deployment.
+         * Class for holding the different gae sdk messages that are associated with different
+         * "headers", representing the stages of deployment.
          */
         private static class PrefixHeaderPair {
             // the header that should be displayed on the console
@@ -274,10 +314,10 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         }
 
         /**
-         * Attempts to reflectively call getDetails() on the event object received
-         * by the onFailure or onSuccess callback. That method is only supported by
-         * App Engine SDK 1.2.1 or later. If we are able to call getDetails we
-         * return the details message; otherwise we return <code>null</code>.
+         * Attempts to reflectively call getDetails() on the event object received by the onFailure
+         * or onSuccess callback. That method is only supported by App Engine SDK 1.2.1 or later. If
+         * we are able to call getDetails we return the details message; otherwise we return
+         * <code>null</code>.
          */
         private static String getDetailsIfSupported(Object updateEvent) {
             try {
@@ -292,8 +332,8 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         }
 
         /**
-         * Reflectively checks to see if an exception is a JspCompilationException,
-         * which is only supported by App Engine SDK 1.2.1 or later.
+         * Reflectively checks to see if an exception is a JspCompilationException, which is only
+         * supported by App Engine SDK 1.2.1 or later.
          */
         private static boolean isJspCompilationException(Throwable ex) {
             if (ex != null) {

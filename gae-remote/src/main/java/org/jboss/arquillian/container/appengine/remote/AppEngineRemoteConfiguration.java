@@ -40,6 +40,7 @@ public class AppEngineRemoteConfiguration extends AppEngineCommonConfiguration {
     private boolean passIn = true;
     private boolean prompt;
     private boolean splitJars;
+    private boolean oAuth2 = Boolean.getBoolean(PREFIX + "oauth2");
     private boolean keepTempUploadDir = Boolean.getBoolean(PREFIX + "keepTempUploadDir");
     private String serverURL = System.getProperty(PREFIX + "server.url");
     private long startupTimeout = 600; // 10min by default
@@ -106,6 +107,14 @@ public class AppEngineRemoteConfiguration extends AppEngineCommonConfiguration {
 
     public void setSplitJars(boolean splitJars) {
         this.splitJars = splitJars;
+    }
+
+    public void setoAuth2(boolean oauth2) {
+        this.oAuth2 = oauth2;
+    }
+
+    public boolean isOAuth2() {
+        return oAuth2;
     }
 
     public boolean isKeepTempUploadDir() {
