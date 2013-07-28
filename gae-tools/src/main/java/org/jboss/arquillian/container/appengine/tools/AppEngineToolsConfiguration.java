@@ -40,6 +40,11 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
     private String appId = System.getProperty(PREFIX + "appId");
     private String module = System.getProperty(PREFIX + "module");
 
+    // [null]: use userId/password
+    // [blank]: use access_token in ${HOME}/appcfg_oauth2_tokens_java
+    // [has_string]: use as the access token.
+    private String oauth2token = System.getProperty(PREFIX + "oauth2token");
+
     // This server is the app under test.
     // See AppEngineToolsContainer.java for the APPENGINE_SERVER environment setting used to
     // upload the app.
@@ -107,5 +112,13 @@ public class AppEngineToolsConfiguration extends AppEngineCommonConfiguration {
 
     public void setModule(String module) {
         this.module = module;
+    }
+
+    public void setOauth2token(String token) {
+        this.oauth2token = token;
+    }
+
+    public String getOauth2token() {
+        return this.oauth2token;
     }
 }

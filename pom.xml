@@ -36,6 +36,7 @@
         <version.h2>1.2.138</version.h2>
         <version.junit>4.8.1</version.junit>
         <version.surefire.plugin>2.12.1</version.surefire.plugin>
+        <version.oauth-client-appengine>1.15.0-rc</version.oauth-client-appengine>
     </properties>
 
     <modules>
@@ -242,6 +243,12 @@
                 <artifactId>h2</artifactId>
                 <version>${version.h2}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client-appengine</artifactId>
+                <version>${version.oauth-client-appengine}</version>
             </dependency>
 
         </dependencies>

@@ -86,6 +86,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-appengine</artifactId>
+        </dependency>
+
     </dependencies>
 
     <profiles>
