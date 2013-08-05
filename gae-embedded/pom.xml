@@ -10,7 +10,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-gae-embedded</artifactId>
     <name>Arquillian Container GAE Embedded 1.x</name>
     <description>GAE Embedded 1.x Container integration for the Arquillian project</description>
@@ -36,10 +35,9 @@
             <artifactId>arquillian-container-spi</artifactId>
         </dependency>
 
-        <!-- TODO We likely need a servlet packager to restrict use of EAR -->
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
-            <artifactId>arquillian-protocol-servlet</artifactId>
+            <artifactId>arquillian-protocol-modules</artifactId>
         </dependency>
 
         <dependency>

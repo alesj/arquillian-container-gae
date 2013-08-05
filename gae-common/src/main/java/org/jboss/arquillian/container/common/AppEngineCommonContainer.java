@@ -29,7 +29,10 @@ import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,15 +41,17 @@ import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
-import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
+import org.jboss.arquillian.protocol.modules.ModuleMetaData;
+import org.jboss.arquillian.protocol.modules.ModulesServletProtocol;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.Node;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
-import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.ServletMappingDef;
-import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.application5.ApplicationDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.application5.ModuleType;
 
 /**
  * Common GAE Arquillian container.
@@ -69,7 +74,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     public ProtocolDescription getDefaultProtocol() {
-        return new ProtocolDescription("Servlet 2.5");
+        return new ProtocolDescription(ModulesServletProtocol.PROTOCOL_NAME);
     }
 
     protected void prepareArchive(Archive<?> archive) {
@@ -90,13 +95,16 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected File export(Archive<?> archive) throws Exception {
-        FixedExplodedExporter exporter = new FixedExplodedExporter(archive,
-                AccessController.doPrivileged(new PrivilegedAction<File>() {
-                    public File run() {
-                        return new File(System.getProperty("java.io.tmpdir"));
-                    }
-                })
-        );
+        File root = AccessController.doPrivileged(new PrivilegedAction<File>() {
+            public File run() {
+                return new File(System.getProperty("java.io.tmpdir"));
+            }
+        });
+        return export(archive, root);
+    }
+
+    protected File export(Archive<?> archive, final File root) throws Exception {
+        FixedExplodedExporter exporter = new FixedExplodedExporter(archive, root);
         return exporter.export();
     }
 
@@ -112,36 +120,85 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     public void undeploy(Descriptor descriptor) throws DeploymentException {
     }
 
-    protected static ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
-        HTTPContext httpContext = new HTTPContext(host, port);
-        List<String> servlets = extractServlets(archive);
-        for (String name : servlets) {
-            httpContext.add(new Servlet(name, "")); // GAE apps have root context
-        }
-        return new ProtocolMetaData().addContext(httpContext);
+    protected ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
+        return getProtocolMetaData(extractModules(host, port, archive));
     }
 
-    protected static List<String> extractServlets(Archive<?> archive) {
-        Node webXml = archive.get("WEB-INF/web.xml");
-        InputStream stream = webXml.getAsset().openStream();
-        try {
-            WebAppDescriptor wad = Descriptors.importAs(WebAppDescriptor.class).fromStream(stream);
-            List<ServletMappingDef> mappings = wad.getServletMappings();
-            List<String> list = new ArrayList<String>();
-            for (ServletMappingDef smd : mappings) {
-                list.add(smd.getServletName());
+    protected ProtocolMetaData getProtocolMetaData(String host, int port) {
+        return getProtocolMetaData(host, port, new String[0]); // empty modules
+    }
+
+    protected ProtocolMetaData getProtocolMetaData(String host, int port, String... modules) {
+        List<ModuleMetaData> list = new ArrayList<ModuleMetaData>();
+        for (String module : modules) {
+            ModuleMetaData mmd = new ModuleMetaData(module, host, port);
+            list.add(mmd);
+        }
+        return getProtocolMetaData(list);
+    }
+
+    protected ProtocolMetaData getProtocolMetaData(List<ModuleMetaData> modules) {
+        final ProtocolMetaData protocolMetaData = new ProtocolMetaData();
+        for (ModuleMetaData mmd : modules) {
+            protocolMetaData.addContext(mmd);
+        }
+        return protocolMetaData;
+    }
+
+    protected static List<ModuleMetaData> extractModules(String host, int port, Archive<?> archive) {
+        final List<ModuleMetaData> list = new ArrayList<ModuleMetaData>();
+        if (archive instanceof EnterpriseArchive) {
+            final EnterpriseArchive ear = (EnterpriseArchive) archive;
+            final Node appXml = archive.get(ParseUtils.APPLICATION_XML);
+            if (appXml != null) {
+                InputStream stream = appXml.getAsset().openStream();
+                try {
+                    ApplicationDescriptor ad = Descriptors.importAs(ApplicationDescriptor.class).fromStream(stream);
+                    List<ModuleType<ApplicationDescriptor>> allModules = ad.getAllModule();
+                    for (ModuleType<ApplicationDescriptor> mt : allModules) {
+                        String uri = mt.getOrCreateWeb().getWebUri();
+                        if (uri != null) {
+                            WebArchive war = ear.getAsType(WebArchive.class, uri);
+                            handleWar(host, port, war, list);
+                        } else {
+                            mt.removeWeb();
+                        }
+                    }
+                } finally {
+                    safeClose(stream);
+                }
             }
-            return list;
-        } finally {
-            safeClose(stream);
+        } else if (archive instanceof WebArchive) {
+            final WebArchive war = (WebArchive) archive;
+            handleWar(host, port, war, list);
+        }
+        return list;
+    }
+
+    protected static void handleWar(String host, int port, WebArchive war, List<ModuleMetaData> list) {
+        Node aeXml = war.get(ParseUtils.APPENGINE_WEB_XML);
+        if (aeXml == null) {
+            throw new IllegalArgumentException("Missing appengine-web.xml: " + war.toString(true));
+        }
+
+        try {
+            Map<String, String> map = ParseUtils.parseTokens(aeXml, new HashSet<String>(Arrays.asList(ParseUtils.MODULE)));
+            String module = map.get(ParseUtils.MODULE);
+            if (module == null) {
+                if (list.isEmpty()) {
+                    module = "default"; // first one is default
+                } else {
+                    throw new IllegalStateException("Missing module info in appengine-web.xml!");
+                }
+            }
+            list.add(new ModuleMetaData(module, host, port));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
     protected static void safeClose(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (IOException ignored) {
-        }
+        ParseUtils.safeClose(closeable);
     }
 
     /**

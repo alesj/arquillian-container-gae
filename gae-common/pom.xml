@@ -10,7 +10,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-gae-common</artifactId>
     <name>Arquillian Container GAE Common</name>
     <description>GAE Common Container integration for the Arquillian project</description>
@@ -21,10 +20,9 @@
             <artifactId>arquillian-container-spi</artifactId>
         </dependency>
 
-        <!-- TODO We likely need a servlet packager to restrict use of EAR -->
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
-            <artifactId>arquillian-protocol-servlet</artifactId>
+            <artifactId>arquillian-protocol-modules</artifactId>
         </dependency>
 
         <dependency>
@@ -34,7 +32,7 @@
 
         <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-            <artifactId>shrinkwrap-descriptors-impl</artifactId>
+            <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
         </dependency>
     </dependencies>
 </project>

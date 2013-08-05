@@ -10,7 +10,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-gae-local</artifactId>
     <name>Arquillian Container GAE Local 1.x</name>
     <description>GAE Local 1.5 Container integration for the Arquillian project</description>
@@ -41,7 +40,7 @@
 
         <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-            <artifactId>shrinkwrap-descriptors-api</artifactId>
+            <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
         </dependency>
 
         <dependency>

@@ -23,6 +23,23 @@
 
 package org.jboss.arquillian.container.appengine.tools;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.google.appengine.repackaged.com.google.api.client.auth.oauth2.Credential;
 import com.google.appengine.tools.admin.AppAdmin;
 import com.google.appengine.tools.admin.AppAdminFactory;
@@ -36,23 +53,21 @@ import com.google.appengine.tools.admin.UpdateSuccessEvent;
 import com.google.appengine.tools.info.SdkInfo;
 import com.google.appengine.tools.info.UpdateCheck;
 import com.google.apphosting.utils.config.AppEngineConfigException;
-
 import org.jboss.arquillian.container.common.AppEngineCommonContainer;
+import org.jboss.arquillian.container.common.ParseUtils;
 import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.Node;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.application5.ApplicationDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.application5.ModuleType;
 import org.xml.sax.SAXParseException;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Tools AppEngine container. <p/> Code taken from "http://code.google.com/p/google-plugin-for-eclipse/source/browse/trunk/plugins/com.google.appengine.eclipse.core/proxy_src/com/google/appengine/eclipse/core/proxy/AppEngineBridgeImpl.java?r=2"
@@ -62,9 +77,8 @@ import java.util.logging.Logger;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineToolsConfiguration> {
-    private static final String DOT = "-dot-";
-
     private AppEngineToolsConfiguration configuration;
+    private Map<String, String> modules = new HashMap<String, String>();
 
     public Class<AppEngineToolsConfiguration> getConfigurationClass() {
         return AppEngineToolsConfiguration.class;
@@ -90,27 +104,165 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         this.configuration = configuration;
     }
 
-    protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
-        try {
-            if (configuration.isUpdateCheck()) {
-                UpdateCheck updateCheck = new UpdateCheck(SdkInfo.getDefaultServer());
-                if (updateCheck.allowedToCheckForUpdates()) {
-                    updateCheck.maybePrintNagScreen(new PrintStream(System.out, true));
+    protected File export(Archive<?> archive) throws Exception {
+        if (archive instanceof WebArchive) {
+            return super.export(archive);
+        } else if (archive instanceof EnterpriseArchive) {
+            return rearrangeEar(EnterpriseArchive.class.cast(archive));
+        } else {
+            throw new IllegalArgumentException("Can only handle .war or .ear deployments: " + archive);
+        }
+    }
+
+    protected File rearrangeEar(EnterpriseArchive ear) {
+        final File root = new File(System.getProperty("java.io.tmpdir"));
+
+        final Node appXml = ear.get(ParseUtils.APPLICATION_XML);
+        if (appXml != null) {
+            InputStream stream = appXml.getAsset().openStream();
+            try {
+                ApplicationDescriptor ad = Descriptors.importAs(ApplicationDescriptor.class).fromStream(stream);
+
+                List<JavaArchive> libs = new ArrayList<JavaArchive>();
+                String libDir = ad.getLibraryDirectory();
+                if (libDir != null) {
+                    libDir = "lib"; // default?
                 }
+                Node lib = ear.get(libDir);
+                if (lib != null) {
+                    for (Node child : lib.getChildren()) {
+                        if (child.getPath().get().endsWith(".jar")) {
+                            JavaArchive jar = ear.getAsType(JavaArchive.class, child.getPath());
+                            libs.add(jar);
+                        }
+                    }
+                }
+
+                List<ModuleType<ApplicationDescriptor>> allModules = ad.getAllModule();
+                for (ModuleType<ApplicationDescriptor> mt : allModules) {
+                    String uri = mt.getOrCreateWeb().getWebUri();
+                    if (uri != null) {
+                        WebArchive war = ear.getAsType(WebArchive.class, uri);
+                        handleWar(root, libs, war, uri);
+                    } else {
+                        mt.removeWeb();
+                    }
+                }
+            } finally {
+                safeClose(stream);
+            }
+        }
+
+        return root;
+    }
+
+    private void handleWar(File root, List<JavaArchive> libs, WebArchive war, String uri) {
+        try {
+            Node awXml = war.get(ParseUtils.APPENGINE_WEB_XML);
+            if (awXml == null) {
+                throw new IllegalStateException("Missing appengine-web.xml: " + war);
+            }
+            Map<String, String> results = ParseUtils.parseTokens(awXml, new HashSet<String>(Arrays.asList(ParseUtils.MODULE)));
+            String module = results.get(ParseUtils.MODULE);
+            if (module == null) {
+                module = "default";
+            }
+            if (modules.put(module, uri) != null) {
+                throw new IllegalArgumentException(String.format("Duplicate module %s in %s", module, modules));
             }
 
-            final Application app = readApplication();
+            WebArchive copy = ShrinkWrap.create(WebArchive.class, war.getName());
+            copy.merge(war);
+            copy.addAsLibraries(libs);
+            export(copy, root);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-            String appId = configuration.getAppId();
+    protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
+        if (configuration.isUpdateCheck()) {
+            UpdateCheck updateCheck = new UpdateCheck(SdkInfo.getDefaultServer());
+            if (updateCheck.allowedToCheckForUpdates()) {
+                updateCheck.maybePrintNagScreen(new PrintStream(System.out, true));
+            }
+        }
+
+        String appId = configuration.getAppId();
+        final String module = configuration.getModule();
+
+        if (archive instanceof WebArchive) {
+            Application app = readApplication("");
+
             if (appId != null) {
                 app.getAppEngineWebXml().setAppId(appId);
+            } else if (appId == null) {
+                appId = app.getAppEngineWebXml().getAppId();
             }
 
-            String module = configuration.getModule();
             if (module != null) {
                 app.getAppEngineWebXml().setModule(module);
             }
 
+            handleApp(app);
+        } else if (archive instanceof EnterpriseArchive) {
+            EnterpriseArchive ear = EnterpriseArchive.class.cast(archive);
+            if (appId == null) {
+                Node aaXml = ear.get(ParseUtils.APPENGINE_APPLICATION_XML);
+                if (aaXml == null) {
+                    throw new IllegalArgumentException("Missing appengine-application.xml: " + ear);
+                }
+                try {
+                    Map<String, String> results = ParseUtils.parseTokens(aaXml, new HashSet<String>(Arrays.asList(ParseUtils.APPLICATION)));
+                    appId = results.get(ParseUtils.APPLICATION);
+                } catch (Exception e) {
+                    throw new DeploymentException(e.getMessage());
+                }
+            }
+
+            if (module != null) {
+                String war = modules.get(module);
+                if (war == null) {
+                    throw new IllegalArgumentException(String.format("No such module %s in %s", module, modules));
+                }
+
+                Application app = readApplication(war);
+
+                if (appId != null) {
+                    app.getAppEngineWebXml().setAppId(appId);
+                }
+
+                app.getAppEngineWebXml().setModule(module);
+
+                handleApp(app);
+            } else {
+                for (Map.Entry<String, String> entry : modules.entrySet()) {
+                    Application app = readApplication(entry.getValue());
+
+                    if (appId != null) {
+                        app.getAppEngineWebXml().setAppId(appId);
+                    }
+
+                    handleApp(app);
+                }
+            }
+        }
+
+        String server = configuration.getServer();
+        if (server == null) {
+            server = "appspot.com";
+        }
+        String host = appId + "." + server;
+
+        if (module == null) {
+            return getProtocolMetaData(host, configuration.getPort(), archive);
+        } else {
+            return getProtocolMetaData(host, configuration.getPort(), module);
+        }
+    }
+
+    protected void handleApp(Application app) throws DeploymentException {
+        try {
             final AppAdmin appAdmin = createAppAdmin(app);
 
             final DeployUpdateListener listener = new DeployUpdateListener(
@@ -136,20 +288,6 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             if (status != Status.OK) {
                 throw new DeploymentException("Cannot deploy via GAE tools: " + status);
             }
-
-            String id;
-            if (module != null) {
-                id = app.getApiVersion() + DOT + module + DOT + app.getAppId();
-            } else {
-                id = app.getVersion() + DOT + app.getAppId();
-            }
-
-            String server = configuration.getServer();
-            if (server == null) {
-                server = "appspot.com";
-            }
-
-            return getProtocolMetaData(id + "." + server, configuration.getPort(), archive);
         } catch (DeploymentException e) {
             throw e;
         } catch (AppEngineConfigException e) {
@@ -178,8 +316,16 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         return Executors.newSingleThreadExecutor();
     }
 
-    protected Application readApplication() throws IOException {
-        return Application.readApplication(getAppLocation().getCanonicalPath());
+    protected Application readApplication(String path) {
+        try {
+            File app = getAppLocation();
+            if (path != null && path.trim().length() > 0) {
+                app = new File(app, path);
+            }
+            return Application.readApplication(app.getCanonicalPath());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     // Based on com.google.appengine.tools.admin.AppCfg.authorizedOauth2()
