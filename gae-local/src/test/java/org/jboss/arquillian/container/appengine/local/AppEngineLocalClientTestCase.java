@@ -30,6 +30,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
@@ -40,7 +41,6 @@ import org.junit.runner.RunWith;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 @RunWith(Arquillian.class)
-@RunAsClient
 public class AppEngineLocalClientTestCase {
     /**
      * Deployment for the test
@@ -50,21 +50,22 @@ public class AppEngineLocalClientTestCase {
     @Deployment(name = "default")
     public static WebArchive getTestArchive() {
         return ShrinkWrap.create(WebArchive.class, "simple.war")
-                .addClass(TestServlet.class)
-                .setWebXML("gae-web.xml")
-                .addAsWebInfResource("appengine-web.xml")
-                .addAsWebInfResource("logging.properties");
+            .addClass(TestServlet.class)
+            .setWebXML("gae-web.xml")
+            .addAsWebInfResource("appengine-web.xml")
+            .addAsWebInfResource("logging.properties");
     }
 
     @Test
     @OperateOnDeployment("default")
-    public void shouldBeAbleToInvokeServletInDeployedWebApp() throws Exception {
-        String body = readAllAndClose(new URL("http://localhost:8080/test").openStream());
+    @RunAsClient
+    public void shouldBeAbleToInvokeServletInDeployedWebApp(@ArquillianResource URL url) throws Exception {
+        String body = readAllAndClose(new URL(url, "test").openStream());
 
         Assert.assertEquals(
-                "Verify that the servlet was deployed and returns expected result",
-                TestServlet.MESSAGE,
-                body);
+            "Verify that the servlet was deployed and returns expected result",
+            TestServlet.MESSAGE,
+            body);
     }
 
     private String readAllAndClose(InputStream is) throws Exception {

@@ -41,6 +41,7 @@ import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.protocol.modules.ModuleMetaData;
 import org.jboss.arquillian.protocol.modules.ModulesServletProtocol;
@@ -121,7 +122,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected ProtocolMetaData getProtocolMetaData(String host, int port, Archive<?> archive) {
-        return getProtocolMetaData(extractModules(host, port, archive));
+        return getProtocolMetaData(host, port, extractModules(host, port, archive));
     }
 
     protected ProtocolMetaData getProtocolMetaData(String host, int port) {
@@ -134,11 +135,14 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
             ModuleMetaData mmd = new ModuleMetaData(module, host, port);
             list.add(mmd);
         }
-        return getProtocolMetaData(list);
+        return getProtocolMetaData(host, port, list);
     }
 
-    protected ProtocolMetaData getProtocolMetaData(List<ModuleMetaData> modules) {
+    protected ProtocolMetaData getProtocolMetaData(String host, int port, List<ModuleMetaData> modules) {
         final ProtocolMetaData protocolMetaData = new ProtocolMetaData();
+        // (@ArquillianResource URL url) support
+        protocolMetaData.addContext(new HTTPContext(host, port));
+        // modules
         for (ModuleMetaData mmd : modules) {
             protocolMetaData.addContext(mmd);
         }
