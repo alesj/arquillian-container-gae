@@ -10,7 +10,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-gae-remote</artifactId>
     <name>Arquillian Container GAE Remote 1.x</name>
     <description>GAE Remote 1.5 Container integration for the Arquillian project</description>

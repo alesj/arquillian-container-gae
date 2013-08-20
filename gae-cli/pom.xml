@@ -10,7 +10,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-gae-cli</artifactId>
     <name>Arquillian Container GAE CLI</name>
     <description>GAE CLI Container integration for the Arquillian project</description>
