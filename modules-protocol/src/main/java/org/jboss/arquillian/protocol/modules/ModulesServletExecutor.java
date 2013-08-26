@@ -37,6 +37,6 @@ public class ModulesServletExecutor extends ServletMethodExecutor {
     public ModulesServletExecutor(ModulesProtocolConfiguration configuration, ProtocolMetaData protocolMetaData, CommandCallback callback) {
         this.config = configuration;
         this.callback = callback;
-        this.uriHandler = new ModulesServletURIHandler(configuration, protocolMetaData.getContexts(ModuleMetaData.class));
+        this.uriHandler = new ModulesServletURIHandler(configuration, protocolMetaData);
     }
 }

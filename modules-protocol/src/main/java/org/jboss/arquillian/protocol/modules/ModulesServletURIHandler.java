@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
 import org.jboss.arquillian.protocol.servlet.ServletMethodExecutor;
 import org.jboss.arquillian.protocol.servlet.ServletURIHandler;
@@ -40,21 +41,56 @@ import org.jboss.arquillian.protocol.servlet.ServletURIHandler;
  */
 public class ModulesServletURIHandler extends ServletURIHandler {
     private ModulesProtocolConfiguration configuration;
+    private Collection<HTTPContext> httpContexts;
     private Collection<ModuleMetaData> modules;
 
-    public ModulesServletURIHandler(ModulesProtocolConfiguration config, Collection<ModuleMetaData> modules) {
-        super(config, Collections.<HTTPContext>singleton(null)); // push non-empty http contexts
+    private static Collection<HTTPContext> getHTTPContext(ProtocolMetaData protocolMetaData) {
+        Collection<HTTPContext> contexts = protocolMetaData.getContexts(HTTPContext.class);
+        if (contexts != null && contexts.size() > 0) {
+            return contexts;
+        } else {
+            return Collections.singleton(null); // push non-empty http contexts
+        }
+    }
+
+    public ModulesServletURIHandler(ModulesProtocolConfiguration config, ProtocolMetaData protocolMetaData) {
+        super(config, getHTTPContext(protocolMetaData));
         this.configuration = config;
-        this.modules = modules;
+        this.httpContexts = protocolMetaData.getContexts(HTTPContext.class);
+        this.modules = protocolMetaData.getContexts(ModuleMetaData.class);
     }
 
     @Override
     protected HTTPContext locateHTTPContext(Method method) {
+        HTTPContext previous = null;
+        if (httpContexts != null && httpContexts.size() > 0) {
+            previous = httpContexts.iterator().next();
+        }
+
         final ModuleContext mc = locateModuleContext(method);
-        HTTPContext context = new HTTPContext(mc.getHost(), mc.getPort());
+        HTTPContext context;
+        if (previous == null) {
+            context = new HTTPContext(mc.getHost(), mc.getPort());
+            addArquillianServlet(context);
+        } else {
+            context = new HTTPContext(previous.getName(), mc.getHost(), mc.getPort());
+            boolean foundArqServlet = false;
+            for (Servlet servlet : previous.getServlets()) {
+                if (foundArqServlet == false && ServletMethodExecutor.ARQUILLIAN_SERVLET_NAME.equals(servlet.getName())) {
+                    foundArqServlet = true;
+                }
+                context.add(servlet);
+            }
+            if (foundArqServlet == false) {
+                addArquillianServlet(context);
+            }
+        }
+        return context;
+    }
+
+    protected void addArquillianServlet(HTTPContext context) {
         Servlet servlet = new Servlet(ServletMethodExecutor.ARQUILLIAN_SERVLET_NAME, "");
         context.add(servlet);
-        return context;
     }
 
     protected ModuleContext locateModuleContext(Method method) {
