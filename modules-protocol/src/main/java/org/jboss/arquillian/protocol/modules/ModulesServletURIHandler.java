@@ -64,7 +64,7 @@ public class ModulesServletURIHandler extends ServletURIHandler {
     protected HTTPContext locateHTTPContext(Method method) {
         HTTPContext previous = null;
         if (httpContexts != null && httpContexts.size() > 0) {
-            previous = httpContexts.iterator().next();
+            previous = super.locateHTTPContext(method);
         }
 
         final ModuleContext mc = locateModuleContext(method);
