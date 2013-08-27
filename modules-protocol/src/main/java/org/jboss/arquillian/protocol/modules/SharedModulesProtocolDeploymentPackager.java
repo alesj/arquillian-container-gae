@@ -23,49 +23,23 @@
 
 package org.jboss.arquillian.protocol.modules;
 
+import java.util.Collection;
+
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+
 /**
+ * Share lib/ between modules.
+ *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class ModuleMetaData implements ModuleContext {
-    private String module;
-    private String host;
-    private int port = 80;
-
-    public ModuleMetaData() {
+public class SharedModulesProtocolDeploymentPackager extends AbstractModulesProtocolDeploymentPackager {
+    protected void addLibrariesToWar(WebArchive war, Collection<Archive<?>> libs) {
+        // do not add, it should be shared in .ear/lib
     }
 
-    public ModuleMetaData(String module, String host, int port) {
-        this.module = module;
-        this.host = host;
-        this.port = port;
-    }
-
-    public String getModule() {
-        return module;
-    }
-
-    public void setModule(String module) {
-        this.module = module;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Module: %s [%s:%s]", module, host, port);
+    protected void addLibrariesToEar(EnterpriseArchive ear, Collection<Archive<?>> libs) {
+        ear.addAsLibraries(libs);
     }
 }

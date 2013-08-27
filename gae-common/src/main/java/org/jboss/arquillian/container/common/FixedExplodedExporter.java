@@ -14,6 +14,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Node;
+import org.jboss.shrinkwrap.api.asset.ArchiveAsset;
 
 /**
  * This is a rip-off from ExplodedExporterDelegate. ;-)
@@ -23,10 +24,15 @@ class FixedExplodedExporter {
 
     private Archive archive;
     private File outputDirectory;
+    private boolean explodeWars = true;
 
     FixedExplodedExporter(Archive archive, File root) {
         this.archive = archive;
         this.outputDirectory = initializeOutputDirectory(root, archive.getName());
+    }
+
+    void setExplodeWars(boolean explodeWars) {
+        this.explodeWars = explodeWars;
     }
 
     File export() {
@@ -39,13 +45,21 @@ class FixedExplodedExporter {
             log.fine("Exporting archive - " + archive.getName());
         }
 
+        processArchive("", archive);
+    }
+
+    protected void processArchive(String relativePath, Archive archive) {
         // Obtain the root
         final Node rootNode = archive.get(ArchivePaths.root());
 
         // Recursively process the root children
         for (Node child : rootNode.getChildren()) {
-            processNode(child);
+            processNode(relativePath, child);
         }
+    }
+
+    protected boolean isWar(Node node) {
+        return (node.getPath().get().endsWith(".war"));
     }
 
     /**
@@ -53,21 +67,30 @@ class FixedExplodedExporter {
      *
      * @param node the node
      */
-    protected void processNode(final Node node) {
-        processNode(node.getPath(), node);
+    protected void processNode(final String relativePath, final Node node) {
+        final boolean isDirectory = (node.getAsset() == null);
+        final boolean explodeWar = explodeWars && isWar(node);
 
-        Set<Node> children = node.getChildren();
-        for (Node child : children) {
-            processNode(child);
+        final ArchivePath path = node.getPath();
+        processNode(relativePath, path, node, isDirectory || explodeWar);
+
+        if (explodeWar) {
+            ArchiveAsset war = (ArchiveAsset) node.getAsset();
+            processArchive(relativePath + path.get(), war.getArchive());
+        } else {
+            Set<Node> children = node.getChildren();
+            for (Node child : children) {
+                processNode(relativePath, child);
+            }
         }
     }
 
-    protected void processNode(ArchivePath path, Node node) {
+    protected void processNode(String relativePath, ArchivePath path, Node node, boolean isDirectory) {
         // Get path to file
         final String assetFilePath = path.get();
 
         // Create a file for the asset
-        final File assetFile = new File(outputDirectory, assetFilePath);
+        final File assetFile = new File(outputDirectory, relativePath + assetFilePath);
 
         // Get the assets parent parent directory and make sure it exists
         final File assetParent = assetFile.getParentFile();
@@ -77,9 +100,8 @@ class FixedExplodedExporter {
             }
         }
 
-        // Handle directory assets separately
+        // Handle directory and inner .war assets separately
         try {
-            final boolean isDirectory = (node.getAsset() == null);
             if (isDirectory) {
                 // If doesn't already exist
                 if (!assetFile.exists()) {
@@ -117,11 +139,15 @@ class FixedExplodedExporter {
     private File initializeOutputDirectory(File baseDirectory, String directoryName) {
         // Create output directory
         final File outputDirectory = new File(baseDirectory, directoryName);
-        if (!outputDirectory.mkdir() && !outputDirectory.exists()) {
-            throw new IllegalArgumentException("Unable to create archive output directory - " + outputDirectory);
+
+        boolean mkdirs = outputDirectory.mkdirs();
+        boolean exists = outputDirectory.exists();
+        if (!mkdirs && !exists) {
+            throw new IllegalArgumentException(String.format("Unable to create archive output directory - %s [%s, %s]", outputDirectory, mkdirs, exists));
         }
+
         if (outputDirectory.isFile()) {
-            throw new IllegalArgumentException("Unable to export exploded directory to " + outputDirectory.getAbsolutePath() + ", it points to a existing file");
+            throw new IllegalArgumentException(String.format("Unable to export exploded directory to %s, it points to an existing file", outputDirectory.getAbsolutePath()));
         }
 
         return outputDirectory;

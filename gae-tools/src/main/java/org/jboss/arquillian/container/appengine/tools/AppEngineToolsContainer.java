@@ -31,10 +31,11 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -78,7 +79,7 @@ import org.xml.sax.SAXParseException;
  */
 public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineToolsConfiguration> {
     private AppEngineToolsConfiguration configuration;
-    private Map<String, String> modules = new HashMap<String, String>();
+    private Map<String, String> modules = new LinkedHashMap<String, String>();
 
     public Class<AppEngineToolsConfiguration> getConfigurationClass() {
         return AppEngineToolsConfiguration.class;
@@ -115,7 +116,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
     }
 
     protected File rearrangeEar(EnterpriseArchive ear) {
-        final File root = new File(System.getProperty("java.io.tmpdir"));
+        final File root = getTempRoot();
 
         final Node appXml = ear.get(ParseUtils.APPLICATION_XML);
         if (appXml != null) {
@@ -130,7 +131,9 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                 }
                 Node lib = ear.get(libDir);
                 if (lib != null) {
-                    for (Node child : lib.getChildren()) {
+                    // defensive copy
+                    final Set<Node> children = new HashSet<Node>(lib.getChildren());
+                    for (Node child : children) {
                         if (child.getPath().get().endsWith(".jar")) {
                             JavaArchive jar = ear.getAsType(JavaArchive.class, child.getPath());
                             libs.add(jar);
@@ -169,6 +172,8 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
             }
             if (modules.put(module, uri) != null) {
                 throw new IllegalArgumentException(String.format("Duplicate module %s in %s", module, modules));
+            } else {
+                log.info(String.format("Found %s module in web archive %s", module, war.getName()));
             }
 
             WebArchive copy = ShrinkWrap.create(WebArchive.class, war.getName());
@@ -181,6 +186,14 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
     }
 
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
+        try {
+            return doDeployInternal(archive);
+        } finally {
+            modules.clear();
+        }
+    }
+
+    protected ProtocolMetaData doDeployInternal(Archive<?> archive) throws DeploymentException {
         if (configuration.isUpdateCheck()) {
             UpdateCheck updateCheck = new UpdateCheck(SdkInfo.getDefaultServer());
             if (updateCheck.allowedToCheckForUpdates()) {
@@ -255,7 +268,8 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         String host = appId + "." + server;
 
         if (module == null) {
-            return getProtocolMetaData(host, configuration.getPort(), archive);
+            String[] appModules = modules.keySet().toArray(new String[modules.size()]);
+            return getProtocolMetaData(host, configuration.getPort(), appModules);
         } else {
             return getProtocolMetaData(host, configuration.getPort(), module);
         }
@@ -343,7 +357,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         String oauth2ClientSecret = null;
         String oauth2RefreshToken = null;
         OAuth2Native client = new OAuth2Native(useCookies, oauth2ClientId,
-                                               oauth2ClientSecret, oauth2RefreshToken);
+            oauth2ClientSecret, oauth2RefreshToken);
         Credential credential = client.authorize();
 
         if (credential == null || credential.getAccessToken() == null) {

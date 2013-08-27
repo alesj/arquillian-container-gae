@@ -23,49 +23,20 @@
 
 package org.jboss.arquillian.protocol.modules;
 
+import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
+import org.jboss.arquillian.container.test.spi.client.deployment.DeploymentPackager;
+
 /**
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class ModuleMetaData implements ModuleContext {
-    private String module;
-    private String host;
-    private int port = 80;
+public class SharedModulesServletProtocol extends ModulesServletProtocol {
+    public static final String SHARED_PROTOCOL_NAME = "Shared Modules Servlet Protocol 1.0";
 
-    public ModuleMetaData() {
+    public ProtocolDescription getDescription() {
+        return new ProtocolDescription(SHARED_PROTOCOL_NAME);
     }
 
-    public ModuleMetaData(String module, String host, int port) {
-        this.module = module;
-        this.host = host;
-        this.port = port;
-    }
-
-    public String getModule() {
-        return module;
-    }
-
-    public void setModule(String module) {
-        this.module = module;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Module: %s [%s:%s]", module, host, port);
+    public DeploymentPackager getPackager() {
+        return new SharedModulesProtocolDeploymentPackager();
     }
 }

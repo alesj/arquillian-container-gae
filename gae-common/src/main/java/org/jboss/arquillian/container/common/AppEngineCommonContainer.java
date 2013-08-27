@@ -95,12 +95,18 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
         return doDeploy(archive);
     }
 
-    protected File export(Archive<?> archive) throws Exception {
-        File root = AccessController.doPrivileged(new PrivilegedAction<File>() {
+    protected File getTempRoot() {
+        return AccessController.doPrivileged(new PrivilegedAction<File>() {
             public File run() {
-                return new File(System.getProperty("java.io.tmpdir"));
+                File root = new File(System.getProperty("java.io.tmpdir"));
+                log.info(String.format("Get temp root: %s", root));
+                return root;
             }
         });
+    }
+
+    protected File export(Archive<?> archive) throws Exception {
+        File root = getTempRoot();
         return export(archive, root);
     }
 

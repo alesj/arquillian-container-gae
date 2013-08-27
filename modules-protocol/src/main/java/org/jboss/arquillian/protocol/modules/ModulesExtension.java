@@ -34,5 +34,6 @@ import org.kohsuke.MetaInfServices;
 public class ModulesExtension implements LoadableExtension {
     public void register(LoadableExtension.ExtensionBuilder builder) {
         builder.service(Protocol.class, ModulesServletProtocol.class);
+        builder.service(Protocol.class, SharedModulesServletProtocol.class);
     }
 }
