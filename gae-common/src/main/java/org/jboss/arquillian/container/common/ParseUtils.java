@@ -27,7 +27,7 @@ import java.io.Closeable;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public final class ParseUtils {
     }
 
     public static Map<String, String> parseTokens(Node xml, final String... tokens) throws Exception {
-        final Set<String> set = new HashSet<String>(Arrays.asList(tokens));
+        final Set<String> set = new LinkedHashSet<String>(Arrays.asList(tokens));
         return parseTokens(xml, set);
     }
 
