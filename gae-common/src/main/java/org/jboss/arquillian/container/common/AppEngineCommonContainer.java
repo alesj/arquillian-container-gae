@@ -185,25 +185,34 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected static void handleWar(String host, int port, WebArchive war, List<ModuleMetaData> list) {
-        Node aeXml = war.get(ParseUtils.APPENGINE_WEB_XML);
-        if (aeXml == null) {
-            throw new IllegalArgumentException("Missing appengine-web.xml: " + war.toString(true));
-        }
-
+        String module;
         try {
-            Map<String, String> map = ParseUtils.parseTokens(aeXml, ParseUtils.MODULE);
-            String module = map.get(ParseUtils.MODULE);
-            if (module == null) {
-                if (list.isEmpty()) {
-                    module = DEFAULT; // first one is default
-                } else {
-                    throw new IllegalStateException("Missing module info in appengine-web.xml!");
-                }
-            }
-            list.add(new ModuleMetaData(module, host, port));
+            module = parseModuleRaw(war);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+        if (module == null) {
+            if (list.isEmpty()) {
+                module = DEFAULT; // first one is default
+            } else {
+                throw new IllegalStateException("Missing module info in appengine-web.xml!");
+            }
+        }
+        list.add(new ModuleMetaData(module, host, port));
+    }
+
+    protected static String parseModule(WebArchive war) throws Exception {
+        final String module = parseModuleRaw(war);
+        return (module != null) ? module : DEFAULT;
+    }
+
+    protected static String parseModuleRaw(WebArchive war) throws Exception {
+        final Node awXml = war.get(ParseUtils.APPENGINE_WEB_XML);
+        if (awXml == null) {
+            throw new IllegalStateException("Missing appengine-web.xml: " + war.toString(true));
+        }
+        final Map<String, String> results = ParseUtils.parseTokens(awXml, ParseUtils.MODULE);
+        return results.get(ParseUtils.MODULE);
     }
 
     protected static void safeClose(Closeable closeable) {

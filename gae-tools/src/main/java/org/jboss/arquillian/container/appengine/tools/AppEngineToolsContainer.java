@@ -177,19 +177,6 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         }
     }
 
-    protected static String parseModule(WebArchive war) throws Exception {
-        final Node awXml = war.get(ParseUtils.APPENGINE_WEB_XML);
-        if (awXml == null) {
-            throw new IllegalStateException("Missing appengine-web.xml: " + war);
-        }
-        final Map<String, String> results = ParseUtils.parseTokens(awXml, ParseUtils.MODULE);
-        String module = results.get(ParseUtils.MODULE);
-        if (module == null) {
-            module = DEFAULT;
-        }
-        return module;
-    }
-
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
         try {
             return doDeployInternal(archive);
