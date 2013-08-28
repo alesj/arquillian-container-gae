@@ -23,20 +23,23 @@
 
 package org.jboss.arquillian.protocol.modules;
 
-import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
-import org.jboss.arquillian.container.test.spi.client.deployment.DeploymentPackager;
+import java.util.Collection;
+
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 /**
+ * Isolate libs to wars..
+ *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class SharedModulesServletProtocol extends ModulesServletProtocol {
-    public static final String SHARED_PROTOCOL_NAME = "Shared Modules Servlet Protocol 1.0";
-
-    public ProtocolDescription getDescription() {
-        return new ProtocolDescription(SHARED_PROTOCOL_NAME);
+public class IsolatedModulesProtocolDeploymentPackager extends AbstractModulesProtocolDeploymentPackager {
+    protected void addLibrariesToWar(WebArchive war, Collection<Archive<?>> libs) {
+        war.addAsLibraries(libs);
     }
 
-    public DeploymentPackager getPackager() {
-        return new SharedModulesProtocolDeploymentPackager();
+    protected void addLibrariesToEar(EnterpriseArchive ear, Collection<Archive<?>> libs) {
+        // do not add
     }
 }

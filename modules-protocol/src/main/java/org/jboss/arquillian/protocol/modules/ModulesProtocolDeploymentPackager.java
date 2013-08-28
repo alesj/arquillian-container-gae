@@ -36,10 +36,10 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
  */
 public class ModulesProtocolDeploymentPackager extends AbstractModulesProtocolDeploymentPackager {
     protected void addLibrariesToWar(WebArchive war, Collection<Archive<?>> libs) {
-        war.addAsLibraries(libs);
+        // do not add
     }
 
     protected void addLibrariesToEar(EnterpriseArchive ear, Collection<Archive<?>> libs) {
-        // do not add
+        ear.addAsLibraries(libs);
     }
 }
