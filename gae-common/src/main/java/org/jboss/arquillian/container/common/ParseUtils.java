@@ -25,7 +25,9 @@ package org.jboss.arquillian.container.common;
 
 import java.io.Closeable;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,7 +49,12 @@ public final class ParseUtils {
     ParseUtils() {
     }
 
-    public static Map<String, String> parseTokens(Node xml, final Set<String> tokens) throws Exception {
+    public static Map<String, String> parseTokens(Node xml, final String... tokens) throws Exception {
+        final Set<String> set = new HashSet<String>(Arrays.asList(tokens));
+        return parseTokens(xml, set);
+    }
+
+    private static Map<String, String> parseTokens(Node xml, final Set<String> tokens) throws Exception {
         final Map<String, String> results = new HashMap<String, String>();
         InputStream is = xml.getAsset().openStream();
         try {

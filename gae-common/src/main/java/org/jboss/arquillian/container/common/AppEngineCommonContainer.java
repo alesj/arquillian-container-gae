@@ -29,8 +29,6 @@ import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -60,6 +58,7 @@ import org.jboss.shrinkwrap.descriptor.api.application5.ModuleType;
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
 public abstract class AppEngineCommonContainer<T extends ContainerConfiguration> implements DeployableContainer<T> {
+    protected static final String DEFAULT = "default";
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     private File appLocation;
@@ -192,11 +191,11 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
         }
 
         try {
-            Map<String, String> map = ParseUtils.parseTokens(aeXml, new HashSet<String>(Arrays.asList(ParseUtils.MODULE)));
+            Map<String, String> map = ParseUtils.parseTokens(aeXml, ParseUtils.MODULE);
             String module = map.get(ParseUtils.MODULE);
             if (module == null) {
                 if (list.isEmpty()) {
-                    module = "default"; // first one is default
+                    module = DEFAULT; // first one is default
                 } else {
                     throw new IllegalStateException("Missing module info in appengine-web.xml!");
                 }

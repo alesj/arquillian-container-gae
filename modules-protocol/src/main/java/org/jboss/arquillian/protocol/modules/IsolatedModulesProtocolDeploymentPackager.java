@@ -30,7 +30,7 @@ import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 /**
- * Isolate libs to wars..
+ * Isolate libs to wars.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */

@@ -30,7 +30,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -107,6 +106,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
 
     protected File export(Archive<?> archive) throws Exception {
         if (archive instanceof WebArchive) {
+            modules.put(parseModule(WebArchive.class.cast(archive)), ""); // we have plain .war, hence default module
             return super.export(archive);
         } else if (archive instanceof EnterpriseArchive) {
             return rearrangeEar(EnterpriseArchive.class.cast(archive));
@@ -161,15 +161,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
 
     private void handleWar(File root, List<JavaArchive> libs, WebArchive war, String uri) {
         try {
-            Node awXml = war.get(ParseUtils.APPENGINE_WEB_XML);
-            if (awXml == null) {
-                throw new IllegalStateException("Missing appengine-web.xml: " + war);
-            }
-            Map<String, String> results = ParseUtils.parseTokens(awXml, new HashSet<String>(Arrays.asList(ParseUtils.MODULE)));
-            String module = results.get(ParseUtils.MODULE);
-            if (module == null) {
-                module = "default";
-            }
+            String module = parseModule(war);
             if (modules.put(module, uri) != null) {
                 throw new IllegalArgumentException(String.format("Duplicate module %s in %s", module, modules));
             } else {
@@ -183,6 +175,19 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    protected static String parseModule(WebArchive war) throws Exception {
+        final Node awXml = war.get(ParseUtils.APPENGINE_WEB_XML);
+        if (awXml == null) {
+            throw new IllegalStateException("Missing appengine-web.xml: " + war);
+        }
+        final Map<String, String> results = ParseUtils.parseTokens(awXml, ParseUtils.MODULE);
+        String module = results.get(ParseUtils.MODULE);
+        if (module == null) {
+            module = DEFAULT;
+        }
+        return module;
     }
 
     protected ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException {
@@ -226,7 +231,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
                     throw new IllegalArgumentException("Missing appengine-application.xml: " + ear);
                 }
                 try {
-                    Map<String, String> results = ParseUtils.parseTokens(aaXml, new HashSet<String>(Arrays.asList(ParseUtils.APPLICATION)));
+                    Map<String, String> results = ParseUtils.parseTokens(aaXml, ParseUtils.APPLICATION);
                     appId = results.get(ParseUtils.APPLICATION);
                 } catch (Exception e) {
                     throw new DeploymentException(e.getMessage());
