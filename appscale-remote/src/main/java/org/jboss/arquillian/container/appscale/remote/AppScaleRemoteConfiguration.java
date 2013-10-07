@@ -51,10 +51,21 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
      */
     private String host = System.getProperty(APPSCALE + "host");
 
+    private String keyName = System.getProperty(APPSCALE + "keyname");
+
     @Override
     public void validate() throws ConfigurationException {
         Validate.notNullOrEmpty(email, "The e-mail address to use as the app's admin must be specified.");
         Validate.notNullOrEmpty(host, "Host running AppScale must be specified.");
+        Validate.notNullOrEmpty(keyName, "AppScale keyname must be specified. Check your AppScalefile, a random keyname may have been generated for you.");
+    }
+
+    public String getKeyName() {
+        return keyName;
+    }
+
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
     }
 
     public String getEmail() {
