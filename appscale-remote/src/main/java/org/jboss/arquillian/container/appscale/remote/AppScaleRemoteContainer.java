@@ -94,12 +94,17 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
         uploadDeploymentCmd.add(getAppLocation().getAbsolutePath());
         uploadDeploymentCmd.add("root@" + configuration.getHost() + ":/root/");
 
-        List<String> deployCmd = ssh("/usr/local/appscale-tools/bin/appscale-upload-app --email " + configuration.getEmail() + " --file /root/" + getAppLocation().getName());
+        List<String> deployCmd = ssh("/usr/local/appscale-tools/bin/appscale-upload-app --email " + configuration.getEmail() + " --file /root/" + getAppLocation().getName() + " --keyname " + configuration.getKeyName());
 
         List<String> responses = new ArrayList<String>();
         try {
             runCmd(uploadDeploymentCmd, "upload", "./", null, configuration.getUploadTimeout());
             runCmd(deployCmd, "deploy", "./", responses, configuration.getDeployTimeout());
+            // Allow some time for the app to come up before we run tests.
+            if(configuration.getSyncTime() > 0)
+            {
+                Thread.sleep(configuration.getSyncTime());
+            }
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot deploy to AppScale.", e);
         }
@@ -115,7 +120,7 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
     @Override
     protected void teardown() throws DeploymentException {
-        List<String> undeployCmd = ssh("/usr/local/appscale-tools/bin/appscale-remove-app --confirm --appname " + deploymentInfo.appName);
+        List<String> undeployCmd = ssh("/usr/local/appscale-tools/bin/appscale-remove-app --confirm --appname " + deploymentInfo.appName + " --keyname " + configuration.getKeyName());
         List<String> removeDeploymentArchive = ssh("rm -rf /root/" + getAppLocation().getName());
 
         try {
