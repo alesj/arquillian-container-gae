@@ -101,7 +101,10 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
             runCmd(uploadDeploymentCmd, "upload", "./", null, configuration.getUploadTimeout());
             runCmd(deployCmd, "deploy", "./", responses, configuration.getDeployTimeout());
             // Allow some time for the app to come up before we run tests.
-            Thread.sleep(10000);
+            if(configuration.getSyncTime() > 0)
+            {
+                Thread.sleep(configuration.getSyncTime());
+            }
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot deploy to AppScale.", e);
         }
