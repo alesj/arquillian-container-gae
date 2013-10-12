@@ -51,11 +51,14 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
      */
     private String host = System.getProperty(APPSCALE + "host");
 
+    /**
+     * Keyname.
+     */
     private String keyName = System.getProperty(APPSCALE + "keyname");
 
     /**
      * The amount of time to sleep to allow apps to synchronize
-     * accross AppScale nodes. 
+     * accross AppScale nodes.
      */
     private String syncTime = System.getProperty(APPSCALE + "synctime");
 
@@ -66,18 +69,14 @@ public class AppScaleRemoteConfiguration implements ContainerConfiguration {
         Validate.notNullOrEmpty(keyName, "AppScale keyname must be specified. Check your AppScalefile, a random keyname may have been generated for you.");
     }
 
-    public void setSyncTime(String syncTime)
-    {
+    public void setSyncTime(String syncTime) {
         this.syncTime = syncTime;
     }
 
     public long getSyncTime() {
-        if(syncTime == null || syncTime.equals(""))
-        {
+        if (syncTime == null || syncTime.trim().length() == 0) {
             return 0;
-        }
-        else
-        {
+        } else {
             return Long.parseLong(syncTime);
         }
     }

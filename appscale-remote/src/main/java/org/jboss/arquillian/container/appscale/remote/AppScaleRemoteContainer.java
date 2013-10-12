@@ -101,9 +101,9 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
             runCmd(uploadDeploymentCmd, "upload", "./", null, configuration.getUploadTimeout());
             runCmd(deployCmd, "deploy", "./", responses, configuration.getDeployTimeout());
             // Allow some time for the app to come up before we run tests.
-            if(configuration.getSyncTime() > 0)
-            {
-                Thread.sleep(configuration.getSyncTime());
+            final long syncTime = configuration.getSyncTime();
+            if (syncTime > 0) {
+                Thread.sleep(syncTime);
             }
         } catch (InterruptedException e) {
             throw new DeploymentException("Cannot deploy to AppScale.", e);
@@ -215,10 +215,10 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
             }
             if (response.startsWith("Uploading")) {
                 /* Expected responses are:
-		 * "Uploading new version of app {appName}"
+         * "Uploading new version of app {appName}"
 		 * "Uploading initial version of app {appName}"
 		 */
-	        deploymentInfo.appName = response.split("app ")[1];
+                deploymentInfo.appName = response.split("app ")[1];
             }
         }
         return deploymentInfo;
@@ -237,8 +237,8 @@ public class AppScaleRemoteContainer extends AppEngineCommonContainer<AppScaleRe
 
         public boolean isValid() {
             return appName != null && !appName.equals("")
-                    && host != null
-                    && port != null && port != 0;
+                && host != null
+                && port != null && port != 0;
         }
     }
 }
