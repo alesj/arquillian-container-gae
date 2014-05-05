@@ -43,6 +43,10 @@ public class AppEngineHack {
                 return appLocation.getName();
             }
 
+            public String getModuleId() {
+                return "default";
+            }
+
             public String getVersionId() {
                 return "1.0";
             }
