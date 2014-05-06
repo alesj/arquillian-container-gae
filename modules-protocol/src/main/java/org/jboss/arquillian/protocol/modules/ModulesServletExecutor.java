@@ -23,6 +23,13 @@
 
 package org.jboss.arquillian.protocol.modules;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.test.spi.command.CommandCallback;
 import org.jboss.arquillian.protocol.servlet.ServletMethodExecutor;
@@ -38,5 +45,81 @@ public class ModulesServletExecutor extends ServletMethodExecutor {
         this.config = configuration;
         this.callback = callback;
         this.uriHandler = new ModulesServletURIHandler(configuration, protocolMetaData);
+    }
+
+    @Override // TODO -- remove this once ARQ ServletMethodExecutor has prepareHttpConnection
+    protected <T> T execute(String url, Class<T> returnType, Object requestObject) throws Exception {
+        URLConnection connection = new URL(url).openConnection();
+        if (!(connection instanceof HttpURLConnection)) {
+            throw new IllegalStateException("Not an http connection! " + connection);
+        }
+        HttpURLConnection httpConnection = (HttpURLConnection) connection;
+        httpConnection.setUseCaches(false);
+        httpConnection.setDefaultUseCaches(false);
+        httpConnection.setDoInput(true);
+
+        prepareHttpConnection(httpConnection);
+
+        try {
+
+            if (requestObject != null) {
+                httpConnection.setRequestMethod("POST");
+                httpConnection.setDoOutput(true);
+                httpConnection.setRequestProperty("Content-Type", "application/octet-stream");
+            }
+
+            if (requestObject != null) {
+                ObjectOutputStream ous = new ObjectOutputStream(httpConnection.getOutputStream());
+                try {
+                    ous.writeObject(requestObject);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error sending request Object, " + requestObject, e);
+                } finally {
+                    ous.flush();
+                    ous.close();
+                }
+            }
+
+            try {
+                httpConnection.getResponseCode();
+            } catch (ConnectException e) {
+                return null; // Could not connect
+            }
+            if (httpConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                ObjectInputStream ois = new ObjectInputStream(httpConnection.getInputStream());
+                Object o;
+                try {
+                    o = ois.readObject();
+                } finally {
+                    ois.close();
+                }
+
+                if (!returnType.isInstance(o)) {
+                    throw new IllegalStateException("Error reading results, expected a " + returnType.getName() + " but got " + o);
+                }
+                return returnType.cast(o);
+            } else if (httpConnection.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
+                return null;
+            } else if (httpConnection.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+                throw new IllegalStateException(
+                    "Error launching test at " + url + ". " + "Got " + httpConnection.getResponseCode() + " (" + httpConnection.getResponseMessage() + ")"
+                );
+            }
+        } finally {
+            httpConnection.disconnect();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("UnusedParameters")
+    protected void prepareHttpConnection(HttpURLConnection connection) {
+        if (Cookies.hasCookies()) {
+            try {
+                String cookies = Cookies.getCookies();
+                connection.setRequestProperty("Cookie", cookies);
+            } finally {
+                Cookies.removeCookies();
+            }
+        }
     }
 }
