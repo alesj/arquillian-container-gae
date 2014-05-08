@@ -113,12 +113,12 @@ public class ModulesServletExecutor extends ServletMethodExecutor {
 
     @SuppressWarnings("UnusedParameters")
     protected void prepareHttpConnection(HttpURLConnection connection) {
-        if (Cookies.hasCookies()) {
+        if (ModulesApi.hasCookies()) {
             try {
-                String cookies = Cookies.getCookies();
+                String cookies = ModulesApi.getCookies();
                 connection.setRequestProperty("Cookie", cookies);
             } finally {
-                Cookies.removeCookies();
+                ModulesApi.removeCookies();
             }
         }
     }

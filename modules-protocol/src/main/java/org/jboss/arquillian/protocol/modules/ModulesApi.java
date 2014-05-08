@@ -23,10 +23,18 @@
 
 package org.jboss.arquillian.protocol.modules;
 
+import java.lang.reflect.Method;
+
+import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
+import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
+
 /**
+ * The only class meant to be exposed as public API;
+ * e.g. to be consumed by external non-ARQ artifacts.
+ *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public class Cookies {
+public class ModulesApi {
     private static final ThreadLocal<String> cookies = new ThreadLocal<String>();
 
     public static void addCookie(String key, String value) {
@@ -48,5 +56,10 @@ public class Cookies {
 
     public static void removeCookies() {
         cookies.remove();
+    }
+
+    public static HTTPContext findHTTPContext(ModulesProtocolConfiguration configuration, ProtocolMetaData protocolMetaData, Method method) {
+        ModulesServletURIHandler handler = new ModulesServletURIHandler(configuration, protocolMetaData);
+        return handler.locateHTTPContext(method);
     }
 }
