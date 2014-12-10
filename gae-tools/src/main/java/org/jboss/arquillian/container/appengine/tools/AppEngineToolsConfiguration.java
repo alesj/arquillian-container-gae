@@ -27,7 +27,7 @@ package org.jboss.arquillian.container.appengine.tools;
 import org.jboss.arquillian.container.common.AppEngineCommonConfiguration;
 
 /**
- * AppEngine CLI configuration.
+ * AppEngine Tools configuration.
  *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */

@@ -12,7 +12,7 @@
 
     <artifactId>arquillian-gae-tools</artifactId>
     <name>Arquillian Container GAE Tools 1.x</name>
-    <description>GAE Tools 1.5 Container integration for the Arquillian project</description>
+    <description>GAE Tools Container integration for the Arquillian project</description>
 
     <!-- Skip tools tests by default -->
     <build>

@@ -12,7 +12,7 @@
 
     <artifactId>arquillian-gae-local</artifactId>
     <name>Arquillian Container GAE Local 1.x</name>
-    <description>GAE Local 1.5 Container integration for the Arquillian project</description>
+    <description>GAE Local Container integration for the Arquillian project</description>
 
     <dependencies>
 

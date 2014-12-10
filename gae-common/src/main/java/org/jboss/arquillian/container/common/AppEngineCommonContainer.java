@@ -26,6 +26,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -78,6 +79,41 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected void prepareArchive(Archive<?> archive) {
+    }
+
+    protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception {
+        delayArchiveDeploy(serverURL, startupTimeout, checkPeriod, new URLChecker() {
+            public boolean check(URL stream) {
+                try {
+                    //noinspection EmptyTryBlock,UnusedDeclaration
+                    try (InputStream is = stream.openStream()) {}
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            }
+        });
+    }
+
+    protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod, URLChecker checker) throws Exception {
+        if (serverURL == null)
+            throw new IllegalArgumentException("Null server url");
+
+        final URL server = new URL(serverURL);
+        log.info("Pinging server url: " + serverURL);
+
+        long timeout = startupTimeout * 1000;
+        while (timeout > 0) {
+            Thread.sleep(checkPeriod);
+
+            if (checker.check(server)) {
+                break;
+            }
+
+            timeout -= checkPeriod;
+        }
+        if (timeout <= 0)
+            throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
     }
 
     protected abstract ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException;
@@ -135,7 +171,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected ProtocolMetaData getProtocolMetaData(String host, int port, String... modules) {
-        List<ModuleMetaData> list = new ArrayList<ModuleMetaData>();
+        List<ModuleMetaData> list = new ArrayList<>();
         for (String module : modules) {
             ModuleMetaData mmd = new ModuleMetaData(module, host, port);
             list.add(mmd);
@@ -155,7 +191,7 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
     }
 
     protected static List<ModuleMetaData> extractModules(String host, int port, Archive<?> archive) {
-        final List<ModuleMetaData> list = new ArrayList<ModuleMetaData>();
+        final List<ModuleMetaData> list = new ArrayList<>();
         if (archive instanceof EnterpriseArchive) {
             final EnterpriseArchive ear = (EnterpriseArchive) archive;
             final Node appXml = archive.get(ParseUtils.APPLICATION_XML);

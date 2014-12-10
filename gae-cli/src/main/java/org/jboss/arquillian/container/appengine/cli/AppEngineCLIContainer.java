@@ -74,27 +74,6 @@ public abstract class AppEngineCLIContainer<T extends ContainerConfiguration> ex
         };
     }
 
-    protected void delayArchiveDeploy(String serverURL, long startupTimeout, long checkPeriod) throws Exception {
-        if (serverURL == null)
-            throw new IllegalArgumentException("Null server url");
-
-        final URL server = new URL(serverURL);
-        log.info("Pinging server url: " + serverURL);
-
-        long timeout = startupTimeout * 1000;
-        while (timeout > 0) {
-            Thread.sleep(checkPeriod);
-            try {
-                server.openStream();
-                break;
-            } catch (Throwable ignored) {
-                timeout -= checkPeriod;
-            }
-        }
-        if (timeout <= 0)
-            throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
-    }
-
     @Override
     protected void shutdownServer() {
         if (appEngineThread != null) {
