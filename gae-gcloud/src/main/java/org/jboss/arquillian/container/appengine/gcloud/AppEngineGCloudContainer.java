@@ -157,7 +157,15 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
     @Override
     protected void shutdownServer() {
         if (process != null) {
-            process.destroy();
+            try {
+                process.destroy();
+            } finally {
+                try {
+                    DockerContainer.removeAll();
+                } catch (Exception e) {
+                    log.warning("Could not cleanup Docker containers.");
+                }
+            }
         }
     }
 
