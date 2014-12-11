@@ -23,48 +23,33 @@
 
 package org.jboss.arquillian.container.appengine.gcloud;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-
-import org.jboss.dmr.ModelNode;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
- * Docker utils.
- *
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-class DockerInspect {
-    private DockerRoot root;
-
-    public static DockerInspect getLast() {
-        return null;
+@RunWith(Arquillian.class)
+public class AppEngineGCloudServerTestCase {
+    /**
+     * Deployment for the test
+     *
+     * @return web archive
+     */
+    @Deployment(name = "default")
+    public static WebArchive getTestArchive() {
+        return ShrinkWrap.create(WebArchive.class, "simple.war")
+            .setWebXML("gae-web.xml")
+            .addAsWebInfResource("appengine-web.xml")
+            .addAsWebInfResource("logging.properties");
     }
 
-    public static DockerInspect getContainer(String id) {
-        return null;
-    }
-
-    int getPort() {
-        return root.getNode("", "").asInt();
-    }
-
-    private static class DockerRoot {
-        private ModelNode root;
-
-        public DockerRoot(InputStream content) throws IOException {
-            root = ModelNode.fromJSONStream(content);
-        }
-
-        private ModelNode getNode(String... names) {
-            ModelNode current = root;
-            for (String name : names) {
-                if (current == null) {
-                    throw new IllegalArgumentException("Invalid names, no such node: " + Arrays.toString(names));
-                }
-                current = current.get(name);
-            }
-            return current;
-        }
+    @Test
+    public void testPing() throws Exception {
+        System.out.println("Ping?");
     }
 }

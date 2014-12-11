@@ -23,11 +23,9 @@
 
 package org.jboss.arquillian.container.appengine.gcloud;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,14 +69,8 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
                 throw new IllegalArgumentException("Missing Docker's FROM value!");
             }
 
-            StringWriter sw = new StringWriter();
-            BufferedWriter writer = new BufferedWriter(sw);
-            writer.append("FROM ").append(configuration.getFrom());
-            writer.newLine();
-            writer.append("ADD . /app");
-            writer.newLine();
-
-            archive.add(new StringAsset(sw.toString()), "Dockerfile");
+            String content = "FROM " + configuration.getFrom() + "\n" + "ADD . /app" + "\n";
+            archive.add(new StringAsset(content), "Dockerfile");
         }
 
         return super.export(archive);
@@ -97,6 +89,12 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
         command.add(getAppLocation().getPath());
 
         log.info("GCloud command: " + command);
+
+        try {
+            DockerContainer.removeAll();
+        } catch (Exception e) {
+            throw new DeploymentException("Cannot remove all previous Docker containers.", e);
+        }
 
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.redirectErrorStream(true);
@@ -126,9 +124,8 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
         int port = readPort();
 
         String serverUrl = "http://" + host + ":" + port + "/_ah/health";
-
         try {
-            delayArchiveDeploy(serverUrl, configuration.getStartupTimeout(), 7000L, new GCloudURLChecker());
+            delayArchiveDeploy(serverUrl, configuration.getStartupTimeout(), 3000L, new GCloudURLChecker());
         } catch (Exception e) {
             throw new DeploymentException("Error delaying archive deployment.", e);
         }
@@ -136,9 +133,25 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
         return getProtocolMetaData(host, port, DEFAULT);
     }
 
-    protected int readPort() {
-        DockerInspect utils = DockerInspect.getLast();
-        return utils.getPort();
+    protected int readPort() throws DeploymentException {
+        int retry = 10;
+        Exception e = null;
+        while (retry > 0) {
+            try {
+                DockerContainer utils = DockerContainer.getLast();
+                return utils.getPort();
+            } catch (Exception ex) {
+                e = ex;
+            }
+            try {
+                Thread.sleep(1000); // wait 1sec
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(ie);
+            }
+            retry--;
+        }
+        throw new DeploymentException("Cannot read port.", e);
     }
 
     @Override
@@ -155,7 +168,7 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
                 try (InputStream is = url.openStream()) {
                     int x;
                     while ((x = is.read()) != -1) {
-                        result += (x & 0xFF);
+                        result += (char) (x & 0xFF);
                     }
                 }
                 return "ok".equalsIgnoreCase(result);
