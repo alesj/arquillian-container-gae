@@ -54,7 +54,7 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
     }
 
     public void setup(AppEngineGCloudConfiguration configuration) {
-        configuration.getHost(); // test host
+        log.info("Docker host: " + configuration.getHost()); // test host
         this.configuration = configuration;
     }
 
@@ -68,6 +68,8 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
             if (configuration.getFrom() == null) {
                 throw new IllegalArgumentException("Missing Docker's FROM value!");
             }
+
+            log.info("Using Docker FROM: " + configuration.getFrom());
 
             String content = "FROM " + configuration.getFrom() + "\n" + "ADD . /app" + "\n";
             archive.add(new StringAsset(content), "Dockerfile");
