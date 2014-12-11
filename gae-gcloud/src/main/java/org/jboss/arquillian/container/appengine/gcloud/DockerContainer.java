@@ -130,7 +130,7 @@ class DockerContainer {
     }
 
     public static DockerContainer getLast() throws Exception {
-        return new DockerContainer(execute("ps", new AbstractStreamHandler<String>() {
+        return getContainer(execute("ps", new AbstractStreamHandler<String>() {
             public void handle(InputStream stream) throws IOException {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
                 set(reader.readLine());
@@ -139,6 +139,9 @@ class DockerContainer {
     }
 
     public static DockerContainer getContainer(String id) throws Exception {
+        if (id == null) {
+            throw new IllegalArgumentException("Null container id.");
+        }
         return new DockerContainer(id);
     }
 
@@ -154,7 +157,11 @@ class DockerContainer {
 
         public DockerRoot(InputStream content) throws IOException {
             ModelNode inspectNode = ModelNode.fromJSONStream(content);
-            root = inspectNode.asList().get(0);
+            List<ModelNode> nodeList = inspectNode.asList();
+            if (nodeList.isEmpty()) {
+                throw new IOException("No INSPECT content yet.");
+            }
+            root = nodeList.get(0);
         }
 
         private ModelNode getNode(String... names) {
