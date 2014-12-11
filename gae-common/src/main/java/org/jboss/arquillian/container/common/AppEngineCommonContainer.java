@@ -107,13 +107,15 @@ public abstract class AppEngineCommonContainer<T extends ContainerConfiguration>
             Thread.sleep(checkPeriod);
 
             if (checker.check(server)) {
+                log.info(String.format("Server [%s] is up and running.", serverURL));
                 break;
             }
 
             timeout -= checkPeriod;
         }
-        if (timeout <= 0)
+        if (timeout <= 0) {
             throw new IllegalStateException("Cannot connect to managed AppEngine, timed out.");
+        }
     }
 
     protected abstract ProtocolMetaData doDeploy(Archive<?> archive) throws DeploymentException;

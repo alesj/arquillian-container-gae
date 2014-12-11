@@ -127,7 +127,7 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
 
         String serverUrl = "http://" + host + ":" + port + "/_ah/health";
         try {
-            delayArchiveDeploy(serverUrl, configuration.getStartupTimeout(), 3000L, new GCloudURLChecker());
+            delayArchiveDeploy(serverUrl, configuration.getStartupTimeout(), 2000L, new GCloudURLChecker());
         } catch (Exception e) {
             throw new DeploymentException("Error delaying archive deployment.", e);
         }
