@@ -23,10 +23,13 @@
 
 package org.jboss.arquillian.container.appengine.gcloud;
 
+import java.io.File;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,6 +38,16 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class AppEngineGCloudServerTestCase {
+
+    private static File resolveGAE() {
+        return Maven
+            .resolver()
+            .loadPomFromFile("pom.xml")
+            .resolve("com.google.appengine:appengine-api-1.0-sdk")
+            .withoutTransitivity()
+            .asSingleFile();
+    }
+
     /**
      * Deployment for the test
      *
@@ -45,7 +58,8 @@ public class AppEngineGCloudServerTestCase {
         return ShrinkWrap.create(WebArchive.class, "simple.war")
             .setWebXML("gae-web.xml")
             .addAsWebInfResource("appengine-web.xml")
-            .addAsWebInfResource("logging.properties");
+            .addAsWebInfResource("logging.properties")
+            .addAsLibrary(resolveGAE());
     }
 
     @Test

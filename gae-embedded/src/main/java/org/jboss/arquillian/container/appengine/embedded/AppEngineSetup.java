@@ -44,7 +44,7 @@ class AppEngineSetup {
 
     private static final String GROUP_ID = "com.google.appengine";
     private static final String ARTIFACT_ID = "appengine-api-1.0-sdk";
-    private static final String VERSION = System.getProperty("appengine.version", "1.7.7.1");
+    private static final String VERSION = System.getProperty("appengine.version", "1.9.17");
 
     /**
      * Add class owner location to java.ext.dirs.

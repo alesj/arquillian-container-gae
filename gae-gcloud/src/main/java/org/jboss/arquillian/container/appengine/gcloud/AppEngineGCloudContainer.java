@@ -136,7 +136,7 @@ public class AppEngineGCloudContainer extends AppEngineCommonContainer<AppEngine
     }
 
     protected int readPort() throws DeploymentException {
-        int retry = 10;
+        int retry = 20;
         Exception e = null;
         while (retry > 0) {
             try {
