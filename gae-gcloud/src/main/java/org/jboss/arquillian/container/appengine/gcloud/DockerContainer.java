@@ -24,7 +24,6 @@
 package org.jboss.arquillian.container.appengine.gcloud;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,13 +46,7 @@ class DockerContainer {
     private DockerContainer(String... args) throws Exception {
         root = execute("inspect", new AbstractStreamHandler<DockerRoot>() {
             public void handle(InputStream stream) throws IOException {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int b;
-                while ((b = stream.read()) != -1) {
-                    baos.write(b);
-                }
-                String content = new String(baos.toByteArray());
-                set(new DockerRoot(content.substring(1, content.length() - 1)));
+                set(new DockerRoot(stream));
             }
         }, args);
     }
@@ -159,8 +152,9 @@ class DockerContainer {
     private static class DockerRoot {
         private ModelNode root;
 
-        public DockerRoot(String content) throws IOException {
-            root = ModelNode.fromJSONString(content);
+        public DockerRoot(InputStream content) throws IOException {
+            ModelNode inspectNode = ModelNode.fromJSONStream(content);
+            root = inspectNode.asList().get(0);
         }
 
         private ModelNode getNode(String... names) {
