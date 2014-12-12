@@ -14,7 +14,7 @@
     <!-- Artifact Configuration -->
     <groupId>org.jboss.arquillian.container</groupId>
     <artifactId>arquillian-parent-gae</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0.Beta10</version>
     <packaging>pom</packaging>
     <name>Arquillian Container Parent GAE</name>
     <description>GoogleAppEngine Container integrations for the Arquillian Project</description>
@@ -229,7 +229,7 @@
         <connection>scm:git:git@github.com:alesj/arquillian-container-gae.git</connection>
         <developerConnection>scm:git:git@github.com:alesj/arquillian-container-gae.git</developerConnection>
         <url>scm:git:git@github.com:alesj/arquillian-container-gae.git</url>
-      <tag>HEAD</tag>
+      <tag>1.0.0.Beta10</tag>
   </scm>
 
 </project>
