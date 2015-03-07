@@ -23,7 +23,6 @@
 
 package org.jboss.arquillian.container.common;
 
-import java.io.InputStream;
 import java.net.URL;
 
 /**
