@@ -93,7 +93,13 @@ public class AppEngineLocalContainer extends AppEngineCLIContainer<AppEngineLoca
                 }
             }
 
-            // TODO -- JVM FLAGS
+            if (configuration.getJvmFlags() != null) {
+                String[] jvmFlags = configuration.getJvmFlags().split(configuration.getJvmFlagsSeparator());
+                for (String jvmFlag : jvmFlags) {
+                    jvm_flag(args, jvmFlag);
+                }
+            }
+
             args.add(getAppLocation().getCanonicalPath());
 
             invokeAppEngine(sdkDir, "com.google.appengine.tools.KickStart", args.toArray(new String[args.size()]));

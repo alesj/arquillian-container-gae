@@ -39,6 +39,7 @@ public class AppEngineLocalConfiguration extends AppEngineCommonConfiguration {
     private boolean startOnFirstThread = true;
     private String javaAgent;
     private String jvmFlags; //
+    private String jvmFlagsSeparator = "\\|";
     private String serverTestURL;
     private long startupTimeout = 30; // 30sec
 
@@ -96,6 +97,14 @@ public class AppEngineLocalConfiguration extends AppEngineCommonConfiguration {
 
     public void setJvmFlags(String jvmFlags) {
         this.jvmFlags = jvmFlags;
+    }
+
+    public String getJvmFlagsSeparator() {
+        return jvmFlagsSeparator;
+    }
+
+    public void setJvmFlagsSeparator(String jvmFlagsSeparator) {
+        this.jvmFlagsSeparator = jvmFlagsSeparator;
     }
 
     public String getServerTestURL() {

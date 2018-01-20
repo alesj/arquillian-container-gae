@@ -44,7 +44,6 @@ import com.google.appengine.repackaged.com.google.api.client.auth.oauth2.Credent
 import com.google.appengine.tools.admin.AppAdmin;
 import com.google.appengine.tools.admin.AppAdminFactory;
 import com.google.appengine.tools.admin.Application;
-import com.google.appengine.tools.admin.GenericApplication;
 import com.google.appengine.tools.admin.OAuth2Native;
 import com.google.appengine.tools.admin.UpdateFailureEvent;
 import com.google.appengine.tools.admin.UpdateListener;
@@ -359,7 +358,7 @@ public class AppEngineToolsContainer extends AppEngineCommonContainer<AppEngineT
         return credential.getAccessToken();
     }
 
-    AppAdmin createAppAdmin(GenericApplication app) throws IOException {
+    AppAdmin createAppAdmin(Application app) throws IOException {
         AppAdminFactory appAdminFactory = new AppAdminFactory();
 
         /**
