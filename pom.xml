@@ -29,7 +29,7 @@
         <version.glassfish.el>2.2</version.glassfish.el>
         <version.servlet-api>2.5</version.servlet-api>
         <version.jsp-api>2.2</version.jsp-api>
-        <version.h2>1.2.138</version.h2>
+        <version.h2>2.1.210</version.h2>
         <version.junit>4.12</version.junit>
         <version.surefire.plugin>2.12.1</version.surefire.plugin>
         <version.oauth-client-appengine>1.15.0-rc</version.oauth-client-appengine>
